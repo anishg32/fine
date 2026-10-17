@@ -82,20 +82,6 @@ CREATE TABLE IF NOT EXISTS public.recurring_transactions (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
 
--- 4b. RECURRING OCCURRENCES TABLE (Idempotent tracking for subscriptions & bills)
-CREATE TABLE IF NOT EXISTS public.recurring_occurrences (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    recurring_id UUID NOT NULL REFERENCES public.recurring_transactions(id) ON DELETE CASCADE,
-    due_date DATE NOT NULL,
-    paid_date DATE,
-    status TEXT NOT NULL DEFAULT 'paid' CHECK (status IN ('pending', 'paid', 'missed', 'skipped')),
-    transaction_id UUID REFERENCES public.transactions(id) ON DELETE SET NULL,
-    idempotency_key TEXT NOT NULL UNIQUE,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
-);
-
 -- 5. TRANSACTIONS TABLE
 -- Note: Amount is stored in integer minor units (paise/cents) to avoid floating-point errors
 CREATE TABLE IF NOT EXISTS public.transactions (
@@ -114,6 +100,20 @@ CREATE TABLE IF NOT EXISTS public.transactions (
     is_recurring BOOLEAN NOT NULL DEFAULT false,
     recurring_id UUID REFERENCES public.recurring_transactions(id) ON DELETE SET NULL,
     transfer_account_id UUID REFERENCES public.accounts(id) ON DELETE SET NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
+);
+
+-- 4b. RECURRING OCCURRENCES TABLE (Idempotent tracking for subscriptions & bills)
+CREATE TABLE IF NOT EXISTS public.recurring_occurrences (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    recurring_id UUID NOT NULL REFERENCES public.recurring_transactions(id) ON DELETE CASCADE,
+    due_date DATE NOT NULL,
+    paid_date DATE,
+    status TEXT NOT NULL DEFAULT 'paid' CHECK (status IN ('pending', 'paid', 'missed', 'skipped')),
+    transaction_id UUID REFERENCES public.transactions(id) ON DELETE SET NULL,
+    idempotency_key TEXT NOT NULL UNIQUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now()),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT timezone('utc'::text, now())
 );
