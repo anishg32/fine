@@ -17,6 +17,7 @@ import {
   CreditCard,
   Calendar,
   Plus,
+  Sparkles,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { fyzaStore } from "@/lib/store";
@@ -27,12 +28,14 @@ interface GlobalSearchDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onOpenAddTransaction?: () => void;
+  onOpenAiTransaction?: () => void;
 }
 
 export function GlobalSearchDialog({
   open,
   onOpenChange,
   onOpenAddTransaction,
+  onOpenAiTransaction,
 }: GlobalSearchDialogProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -111,22 +114,80 @@ export function GlobalSearchDialog({
 
         <div className="max-h-96 overflow-y-auto p-2 space-y-3">
           {/* Quick Actions */}
-          {onOpenAddTransaction && !query && (
-            <div className="px-2 py-1">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+          {!query && (
+            <div className="px-2 py-1 space-y-1">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider block mb-1">
                 Quick Actions
               </span>
+              {onOpenAiTransaction && (
+                <button
+                  onClick={() => {
+                    onOpenChange(false);
+                    onOpenAiTransaction();
+                  }}
+                  className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-gradient-to-r from-primary/15 via-surface to-primary/5 border border-primary/30 hover:border-primary/60 text-left text-sm transition-all group shadow-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="h-7 w-7 rounded-lg bg-primary text-black flex items-center justify-center font-bold">
+                      <Sparkles className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <span className="font-bold text-foreground block text-xs">
+                        AI Natural Language Quick-Add
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        Type or speak plain sentences (e.g. Spent 450 on coffee)
+                      </span>
+                    </div>
+                  </div>
+                  <kbd className="hidden sm:inline-flex h-5 items-center rounded bg-primary/20 text-primary border border-primary/30 px-1.5 text-[10px] font-mono">
+                    ⌘J
+                  </kbd>
+                </button>
+              )}
+              {onOpenAddTransaction && (
+                <button
+                  onClick={() => {
+                    onOpenChange(false);
+                    onOpenAddTransaction();
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-surface-secondary text-left text-sm text-primary transition-colors group"
+                >
+                  <div className="h-7 w-7 rounded-lg bg-primary/20 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-black transition-colors">
+                    <Plus className="h-4 w-4" />
+                  </div>
+                  <span className="font-semibold text-foreground text-xs">Record New Transaction (Form)</span>
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* AI Natural Language Query Match */}
+          {query.trim().length > 2 && onOpenAiTransaction && (
+            <div className="px-2 py-1">
               <button
                 onClick={() => {
                   onOpenChange(false);
-                  onOpenAddTransaction();
+                  onOpenAiTransaction();
                 }}
-                className="mt-1 w-full flex items-center gap-3 px-3 py-2 rounded-xl hover:bg-surface-secondary text-left text-sm text-primary transition-colors group"
+                className="w-full flex items-center justify-between p-2.5 rounded-xl bg-gradient-to-r from-primary/15 via-surface to-primary/5 border border-primary/30 hover:border-primary text-left transition-all group"
               >
-                <div className="h-7 w-7 rounded-lg bg-primary/20 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-black transition-colors">
-                  <Plus className="h-4 w-4" />
+                <div className="flex items-center gap-2.5">
+                  <div className="h-7 w-7 rounded-lg bg-primary text-black flex items-center justify-center shrink-0">
+                    <Sparkles className="h-4 w-4" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-foreground block">
+                      AI Natural Language: Log &quot;{query}&quot;
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">
+                      Automatically extract amount, category, account & date
+                    </span>
+                  </div>
                 </div>
-                <span className="font-semibold text-foreground">Record New Transaction</span>
+                <kbd className="hidden sm:inline-flex h-5 items-center rounded bg-primary/20 text-primary border border-primary/30 px-1.5 text-[10px] font-mono">
+                  ↵ Enter
+                </kbd>
               </button>
             </div>
           )}

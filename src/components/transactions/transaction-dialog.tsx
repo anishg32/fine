@@ -22,6 +22,8 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { fyzaStore } from "@/lib/store";
 import { toMinorUnits, toMajorUnits } from "@/lib/utils";
+import { parseNaturalLanguageTransaction } from "@/lib/ai-nlp";
+import { Sparkles } from "lucide-react";
 import type { Account, Category, Transaction, TransactionType } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -29,6 +31,7 @@ interface TransactionDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   transaction?: Transaction | null;
+  prefilled?: Partial<Transaction> | null;
   onSaved?: () => void;
 }
 
@@ -36,6 +39,7 @@ export function TransactionDialog({
   open,
   onOpenChange,
   transaction,
+  prefilled,
   onSaved,
 }: TransactionDialogProps) {
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -53,6 +57,7 @@ export function TransactionDialog({
   const [tagsStr, setTagsStr] = useState("");
   const [isRecurring, setIsRecurring] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
 
   useEffect(() => {
     if (open) {
@@ -60,6 +65,7 @@ export function TransactionDialog({
       const cats = fyzaStore.getCategories();
       setAccounts(accs);
       setCategories(cats);
+      setAiPrompt("");
 
       if (transaction) {
         setType(transaction.type);
@@ -73,6 +79,18 @@ export function TransactionDialog({
         setNotes(transaction.notes || "");
         setTagsStr((transaction.tags || []).join(", "));
         setIsRecurring(transaction.is_recurring || false);
+      } else if (prefilled) {
+        setType(prefilled.type || "expense");
+        setAccountId(prefilled.account_id || accs[0]?.id || "");
+        setTransferAccountId(prefilled.transfer_account_id || accs[1]?.id || "");
+        setCategoryId(prefilled.category_id || cats[0]?.id || "");
+        setAmountStr(prefilled.amount ? String(toMajorUnits(prefilled.amount)) : "");
+        setDescription(prefilled.description || "");
+        setMerchant(prefilled.merchant || "");
+        setTransactionDate(prefilled.transaction_date || new Date().toISOString().split("T")[0]);
+        setNotes(prefilled.notes || "");
+        setTagsStr((prefilled.tags || []).join(", "));
+        setIsRecurring(prefilled.is_recurring || false);
       } else {
         // Reset defaults
         setType("expense");
@@ -89,7 +107,27 @@ export function TransactionDialog({
         setIsRecurring(false);
       }
     }
-  }, [open, transaction]);
+  }, [open, transaction, prefilled]);
+
+  const handleAiFill = () => {
+    if (!aiPrompt.trim()) return;
+    const result = parseNaturalLanguageTransaction(aiPrompt, accounts, categories);
+    setType(result.type);
+    if (result.amountMajor > 0) setAmountStr(String(result.amountMajor));
+    if (result.description) setDescription(result.description);
+    if (result.merchant) setMerchant(result.merchant);
+    if (result.accountId) setAccountId(result.accountId);
+    if (result.type === "transfer" && result.transferAccountId) {
+      setTransferAccountId(result.transferAccountId);
+    } else if (result.categoryId) {
+      setCategoryId(result.categoryId);
+    }
+    if (result.transactionDate) setTransactionDate(result.transactionDate);
+    if (result.notes) setNotes(result.notes);
+    if (result.tags.length > 0) setTagsStr(result.tags.join(", "));
+    toast.success(`Form populated with AI: "${result.description}" (${result.confidence}% confidence) ✨`);
+    setAiPrompt("");
+  };
 
   const filteredCategories = categories.filter((c) => c.type === type);
 
@@ -164,6 +202,42 @@ export function TransactionDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+          {/* AI Natural Language Quick Fill (for new transactions) */}
+          {!transaction && (
+            <div className="p-3 rounded-xl bg-gradient-to-r from-primary/10 via-surface to-primary/5 border border-primary/25 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-primary flex items-center gap-1.5 uppercase tracking-wider">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  AI Natural Language Quick-Fill
+                </span>
+                <span className="text-[10px] text-muted-foreground">Press Enter to fill</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Input
+                  placeholder="e.g. Spent 450 at Starbucks on coffee..."
+                  value={aiPrompt}
+                  onChange={(e) => setAiPrompt(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleAiFill();
+                    }
+                  }}
+                  className="h-8 text-xs bg-surface border-border"
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleAiFill}
+                  disabled={!aiPrompt.trim()}
+                  className="h-8 px-2.5 text-xs bg-primary text-black font-bold hover:bg-primary/90 shrink-0"
+                >
+                  Auto-Fill
+                </Button>
+              </div>
+            </div>
+          )}
+
           {/* Transaction Type Tabs */}
           <div className="flex flex-col gap-1.5">
             <Label className="text-xs text-muted-foreground">Type</Label>

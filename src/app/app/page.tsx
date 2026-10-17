@@ -60,6 +60,7 @@ import {
 import { formatCurrency, getGreeting } from "@/lib/utils";
 import { CountUp } from "@/components/ui/count-up";
 import { TransactionDialog } from "@/components/transactions/transaction-dialog";
+import { AINaturalLanguageDialog } from "@/components/transactions/ai-natural-language-dialog";
 import type {
   Account,
   Transaction,
@@ -96,6 +97,7 @@ export default function DashboardPage() {
   // Quick Edit Transaction
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
 
   const loadData = () => {
     setAccounts(fyzaStore.getAccounts());
@@ -558,15 +560,24 @@ export default function DashboardPage() {
             </p>
           </div>
         </div>
-        <Link href="/app/ai-assistant">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button
             size="sm"
-            variant="outline"
-            className="border-primary/40 text-primary hover:bg-primary/10 text-xs font-bold whitespace-nowrap rounded-xl shadow-sm"
+            onClick={() => setIsAiDialogOpen(true)}
+            className="bg-primary text-black font-extrabold hover:bg-primary/90 text-xs shadow-md shadow-primary/20 rounded-xl"
           >
-            Chat with Fyza AI <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+            <Sparkles className="mr-1.5 h-3.5 w-3.5" /> AI Quick Add
           </Button>
-        </Link>
+          <Link href="/app/ai-assistant">
+            <Button
+              size="sm"
+              variant="outline"
+              className="border-primary/40 text-primary hover:bg-primary/10 text-xs font-bold whitespace-nowrap rounded-xl shadow-sm"
+            >
+              Chat with Fyza AI <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+            </Button>
+          </Link>
+        </div>
       </div>
 
       {/* ============================================================
@@ -1121,6 +1132,13 @@ export default function DashboardPage() {
           }}
         />
       )}
+
+      {/* AI Natural Language Quick Add Modal */}
+      <AINaturalLanguageDialog
+        open={isAiDialogOpen}
+        onOpenChange={setIsAiDialogOpen}
+        onSaved={loadData}
+      />
     </div>
   );
 }

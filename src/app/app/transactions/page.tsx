@@ -10,6 +10,7 @@ import {
   Edit2,
   RotateCcw,
   AlertTriangle,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +30,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { TransactionDialog } from "@/components/transactions/transaction-dialog";
+import { AINaturalLanguageDialog } from "@/components/transactions/ai-natural-language-dialog";
 import { fyzaStore } from "@/lib/store";
 import { formatCurrency, toMinorUnits } from "@/lib/utils";
 import type { Transaction, Account, Category, TransactionType } from "@/lib/types";
@@ -41,6 +43,7 @@ export default function TransactionsPage() {
 
   // Dialog states
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isAiDialogOpen, setIsAiDialogOpen] = useState(false);
   const [editingTx, setEditingTx] = useState<Transaction | null>(null);
   const [deletingTx, setDeletingTx] = useState<Transaction | null>(null);
 
@@ -270,6 +273,14 @@ export default function TransactionsPage() {
             className="text-xs flex items-center gap-1.5"
           >
             <Download className="h-3.5 w-3.5" /> Export
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsAiDialogOpen(true)}
+            className="border-primary/40 text-primary hover:bg-primary/10 text-xs flex items-center gap-1.5 font-bold shadow-sm"
+          >
+            <Sparkles className="h-3.5 w-3.5" /> AI Natural Language
           </Button>
           <Button
             size="sm"
@@ -515,6 +526,17 @@ export default function TransactionsPage() {
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         transaction={editingTx}
+      />
+
+      {/* AI Natural Language Dialog */}
+      <AINaturalLanguageDialog
+        open={isAiDialogOpen}
+        onOpenChange={setIsAiDialogOpen}
+        onOpenStandardForm={(prefilled) => {
+          setEditingTx(prefilled as Transaction);
+          setIsDialogOpen(true);
+        }}
+        onSaved={loadData}
       />
 
       {/* Delete Confirmation Dialog */}

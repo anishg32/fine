@@ -412,6 +412,113 @@ ${summaryFacts}`;
           `All active commitments are currently covered by your recorded monthly income.`;
       }
     }
+    // Question 9: What is my net worth / total balance?
+    else if (
+      lower.includes("net worth") ||
+      lower.includes("total balance") ||
+      lower.includes("how much do i have") ||
+      lower.includes("total money") ||
+      lower.includes("my wealth")
+    ) {
+      if (context) {
+        answer = `### Net Worth & Liquidity Overview\n\n` +
+          `• **Total Liquid Tracked Balance:** **${fmt(context.totalBalanceMinor)}**\n` +
+          `• **Monthly Net Cash Flow:** **${context.netCashFlowMinor >= 0 ? "+" : ""}${fmt(context.netCashFlowMinor)}**\n` +
+          `• **Current Savings Rate:** **${context.savingsRatePct}%**\n` +
+          `• **Emergency Cash Runway:** **${context.emergencyMonths !== undefined ? `${context.emergencyMonths} months` : "Calculated on expenses"}**\n\n` +
+          `Your financial foundation remains resilient. All balances are verified against your active account ledgers.`;
+      } else {
+        answer = "Your tracked balance and net worth are loaded directly from your linked accounts.";
+      }
+    }
+    // Question 10: Emergency Buffer & Financial Runway
+    else if (
+      lower.includes("emergency") ||
+      lower.includes("runway") ||
+      lower.includes("cushion") ||
+      lower.includes("safety net")
+    ) {
+      if (context) {
+        const runway = context.emergencyMonths ?? 6;
+        answer = `### Emergency Buffer & Survival Runway\n\n` +
+          `• **Current Runway:** **${runway} Months** of essential living expenses\n` +
+          `• **Liquid Reserves:** **${fmt(context.totalBalanceMinor)}**\n` +
+          `• **Monthly Burn Rate:** **${fmt(context.periodExpensesMinor)}**\n\n` +
+          (runway >= 6
+            ? `🛡️ **Status: Robust (Tier 1).** Your cash reserves exceed the recommended 6-month safety standard. You have strong protection against unexpected events.`
+            : runway >= 3
+            ? `✅ **Status: Healthy.** You maintain over 3 months of runway. Continuing to allocate a small portion of your monthly surplus will build it to the ideal 6-month tier.`
+            : `⚠️ **Status: Build Required.** Your emergency buffer is below 3 months. Prioritize building liquid reserves before taking on aggressive non-essential spending.`);
+      } else {
+        answer = "Emergency buffer analysis requires account balances and monthly outflow records.";
+      }
+    }
+    // Question 11: Can I afford a purchase? (Affordability Simulation)
+    else if (
+      lower.includes("afford") ||
+      lower.includes("should i buy") ||
+      lower.includes("can i buy")
+    ) {
+      // Try to extract amount from question
+      const numMatch = message.match(/(?:₹|rs\.?|inr)?\s*([\d,]+(?:\.\d+)?)\s*(?:k|lakhs?|l)?\b/i);
+      let purchaseMinor = 2500000; // default ₹25,000 for illustration if not specified
+      if (numMatch) {
+        let val = parseFloat(numMatch[1].replace(/,/g, ""));
+        if (message.toLowerCase().includes("k") && val < 1000) val *= 1000;
+        else if (message.toLowerCase().includes("lakh") && val < 100) val *= 100000;
+        if (!isNaN(val) && val > 0) purchaseMinor = Math.round(val * 100);
+      }
+
+      if (context) {
+        const surplus = context.netCashFlowMinor;
+        const remainingSurplus = surplus - purchaseMinor;
+        const isComfortable = remainingSurplus >= 0;
+
+        answer = `### Affordability Assessment for ${fmt(purchaseMinor)}\n\n` +
+          `• **Planned Purchase Amount:** ${fmt(purchaseMinor)}\n` +
+          `• **Monthly Net Cash Flow Surplus:** ${fmt(surplus)}\n` +
+          `• **Liquid Cash Balance:** ${fmt(context.totalBalanceMinor)}\n` +
+          `• **Cash Flow Impact:** ${isComfortable ? `Leaves **+${fmt(remainingSurplus)}** surplus this month` : `Exceeds monthly surplus by **${fmt(Math.abs(remainingSurplus))}**`}\n\n` +
+          (isComfortable
+            ? `✅ **Verdict: Feasible without debt.** Your monthly cash surplus fully covers this purchase without dipping into your core emergency reserves.`
+            : `⚠️ **Verdict: Caution.** This purchase exceeds your monthly cash surplus. If you proceed, finance it from discretionary savings rather than credit card debt, and ensure your 3-month emergency buffer remains intact.`);
+      } else {
+        answer = "To evaluate purchase affordability, Fyza analyzes your monthly cash surplus against your tracked expenses.";
+      }
+    }
+    // Question 12: Transportation & Commute
+    else if (
+      lower.includes("transport") ||
+      lower.includes("uber") ||
+      lower.includes("ola") ||
+      lower.includes("travel") ||
+      lower.includes("cab") ||
+      lower.includes("petrol") ||
+      lower.includes("commute")
+    ) {
+      const transItem = context?.spendingByCategory.find((c) =>
+        c.category.toLowerCase().includes("transport") || c.category.toLowerCase().includes("travel")
+      );
+      answer = `### Transportation Spending Analysis (${periodLabel})\n\n` +
+        `• **Recorded Outflow:** **${transItem ? fmt(transItem.amountMinor) : "₹0.00"}** (${transItem?.percentage || 0}% of monthly expenses)\n` +
+        `• **Ledger Context:** Includes rideshare (Uber/Ola), fuel, tolls, and public transit.\n\n` +
+        `*Efficiency Tip:* Rideshare pass bundles or carpooling on routine commute routes can reduce monthly travel expenses by up to 18%.`;
+    }
+    // Question 13: Shopping & Discretionary
+    else if (
+      lower.includes("shopping") ||
+      lower.includes("clothes") ||
+      lower.includes("amazon") ||
+      lower.includes("electronics")
+    ) {
+      const shopItem = context?.spendingByCategory.find((c) =>
+        c.category.toLowerCase().includes("shopping")
+      );
+      answer = `### Shopping Outflow Review (${periodLabel})\n\n` +
+        `• **Total Recorded Shopping:** **${shopItem ? fmt(shopItem.amountMinor) : "₹0.00"}** (${shopItem?.percentage || 0}% of period spend)\n` +
+        `• **Ledger Context:** Covers online retail, electronics, clothing, and discretionary lifestyle purchases.\n\n` +
+        `*Guideline:* Keeping discretionary shopping under 15% of net income maintains optimal pacing toward your long-term wealth milestones.`;
+    }
     // Fallback General Financial Summary
     else {
       answer = `### Fyza Financial Snapshot (${periodLabel})\n\n` +

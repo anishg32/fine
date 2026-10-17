@@ -46,7 +46,13 @@ const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   "/app/settings": { title: "Settings & Preferences", subtitle: "Theming, currency, data portability, and profile" },
 };
 
-export function AppHeader({ onOpenAddTransaction }: { onOpenAddTransaction?: () => void }) {
+export function AppHeader({
+  onOpenAddTransaction,
+  onOpenAiTransaction,
+}: {
+  onOpenAddTransaction?: () => void;
+  onOpenAiTransaction?: () => void;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, profile, signOut, isDemoMode } = useAuth();
@@ -64,9 +70,12 @@ export function AppHeader({ onOpenAddTransaction }: { onOpenAddTransaction?: () 
     };
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setSearchOpen((prev) => !prev);
+      } else if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "j") {
+        e.preventDefault();
+        if (onOpenAiTransaction) onOpenAiTransaction();
       }
     };
 
@@ -76,7 +85,7 @@ export function AppHeader({ onOpenAddTransaction }: { onOpenAddTransaction?: () 
       window.removeEventListener("fyza_store_updated", handleUpdate);
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, []);
+  }, [onOpenAiTransaction]);
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
@@ -140,6 +149,23 @@ export function AppHeader({ onOpenAddTransaction }: { onOpenAddTransaction?: () 
               ⌘K
             </kbd>
           </button>
+
+          {/* AI Natural Language Quick Add Button */}
+          {onOpenAiTransaction && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onOpenAiTransaction}
+              className="hidden sm:inline-flex items-center gap-1.5 border-primary/40 text-primary hover:bg-primary/10 font-bold rounded-xl shadow-sm text-xs"
+              title="AI Natural Language Quick-Add (⌘J)"
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              <span>AI Quick Add</span>
+              <kbd className="hidden lg:inline-flex h-4 items-center rounded bg-primary/10 border border-primary/20 px-1 text-[10px] text-primary font-mono ml-0.5">
+                ⌘J
+              </kbd>
+            </Button>
+          )}
 
           {/* Quick Add Transaction Button */}
           {onOpenAddTransaction && (
@@ -280,6 +306,7 @@ export function AppHeader({ onOpenAddTransaction }: { onOpenAddTransaction?: () 
         open={searchOpen}
         onOpenChange={setSearchOpen}
         onOpenAddTransaction={onOpenAddTransaction}
+        onOpenAiTransaction={onOpenAiTransaction}
       />
     </>
   );
