@@ -40,7 +40,7 @@ const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = {
   "/app/goals": { title: "Savings Goals", subtitle: "Track milestones and periodic contributions" },
   "/app/analytics": { title: "Analytics & Trends", subtitle: "Deep dive into financial patterns and breakdown" },
   "/app/forecast": { title: "Financial Forecast", subtitle: "Multi-scenario balance and cash flow projections" },
-  "/app/ai-assistant": { title: "Fyza AI Assistant", subtitle: "Context-aware intelligence for your finances" },
+  "/app/ai-assistant": { title: "Financial Assistant", subtitle: "Ask questions, explore spending trends, and plan milestones" },
   "/app/accounts": { title: "Accounts & Assets", subtitle: "Manage bank accounts, wallets, and cards" },
   "/app/reports": { title: "Financial Reports", subtitle: "Statements, cash flow analysis & export center" },
   "/app/settings": { title: "Settings & Preferences", subtitle: "Theming, currency, data portability, and profile" },
@@ -123,7 +123,7 @@ export function AppHeader({
               {pathname.replace("/app/", "").replace("/app", "Overview") || "Overview"}
             </span>
           </div>
-          <h1 className="text-base sm:text-lg font-extrabold tracking-tight text-foreground truncate">
+          <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground truncate">
             {currentMeta.title}
           </h1>
         </div>
@@ -150,18 +150,18 @@ export function AppHeader({
             </kbd>
           </button>
 
-          {/* AI Natural Language Quick Add Button */}
+          {/* Natural Language Quick Add Button */}
           {onOpenAiTransaction && (
             <Button
               size="sm"
               variant="outline"
               onClick={onOpenAiTransaction}
-              className="hidden sm:inline-flex items-center gap-1.5 border-primary/40 text-primary hover:bg-primary/10 font-bold rounded-xl shadow-sm text-xs"
-              title="AI Natural Language Quick-Add (⌘J)"
+              className="hidden sm:inline-flex items-center gap-1.5 border-border hover:bg-surface-elevated text-foreground font-semibold rounded-xl shadow-sm text-xs"
+              title="Natural Language Quick-Add (⌘J)"
             >
-              <Sparkles className="h-3.5 w-3.5" />
-              <span>AI Quick Add</span>
-              <kbd className="hidden lg:inline-flex h-4 items-center rounded bg-primary/10 border border-primary/20 px-1 text-[10px] text-primary font-mono ml-0.5">
+              <Sparkles className="h-3.5 w-3.5 text-primary" />
+              <span>Quick Add</span>
+              <kbd className="hidden lg:inline-flex h-4 items-center rounded bg-muted border border-border px-1 text-[10px] text-muted-foreground font-mono ml-0.5">
                 ⌘J
               </kbd>
             </Button>

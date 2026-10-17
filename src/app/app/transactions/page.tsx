@@ -242,11 +242,11 @@ export default function TransactionsPage() {
       {/* Top Action Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-extrabold tracking-tight text-foreground">
-            Transaction Activity
+          <h2 className="text-2xl font-bold tracking-tight text-foreground">
+            Transactions
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Audit, categorize, and export your personal ledger records.
+            View, filter, and manage your account transactions.
           </p>
         </div>
 
@@ -278,9 +278,9 @@ export default function TransactionsPage() {
             variant="outline"
             size="sm"
             onClick={() => setIsAiDialogOpen(true)}
-            className="border-primary/40 text-primary hover:bg-primary/10 text-xs flex items-center gap-1.5 font-bold shadow-sm"
+            className="border-border hover:bg-surface-elevated text-foreground text-xs flex items-center gap-1.5 font-medium transition-colors"
           >
-            <Sparkles className="h-3.5 w-3.5" /> AI Natural Language
+            <Sparkles className="h-3.5 w-3.5 text-primary" /> Quick Add
           </Button>
           <Button
             size="sm"
@@ -389,7 +389,7 @@ export default function TransactionsPage() {
             </div>
 
             <div className="flex items-center gap-3">
-              <span className="font-mono text-[11px]">
+              <span className="text-[11px] text-muted-foreground font-medium">
                 Showing {filteredTransactions.length} of {transactions.length} records
               </span>
               {(searchQuery || typeFilter !== "all" || categoryFilter !== "all" || accountFilter !== "all" || startDate || endDate) && (
@@ -479,7 +479,7 @@ export default function TransactionsPage() {
                             {tx.category?.name || (isTransfer ? "Transfer" : "General")}
                           </span>
                         </td>
-                        <td className="py-3 px-4 text-right font-bold whitespace-nowrap">
+                        <td className="py-3 px-4 text-right font-semibold whitespace-nowrap tabular-nums">
                           <span
                             className={
                               isIncome

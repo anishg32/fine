@@ -1298,10 +1298,10 @@ export default function InteractiveDemoPage() {
             <div className="p-5 rounded-2xl border border-secondary/30 bg-secondary/10 space-y-2">
               <div className="flex items-center gap-2 text-secondary font-bold text-sm">
                 <Bot className="h-5 w-5" />
-                <span>Deterministic Fyza AI Assistant Preview</span>
+                <span>Financial Assistant Preview</span>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                This demo engine inspects the <strong>actual active state of your demo ledger</strong> in real time. It calculates mathematical proofs directly from your transactions and budgets without arithmetic hallucinations or third-party API dependencies.
+                This preview connects directly to your active demo ledger. It computes answers in real time based on your transactions, category totals, and budget limits.
               </p>
             </div>
 

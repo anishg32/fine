@@ -122,10 +122,10 @@ export default function ForecastPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
-            What-If Financial Simulator & Runway
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20">
-              Deterministic Math
+          <h2 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-2">
+            Forecast & Runway Simulator
+            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-surface border border-border text-muted-foreground">
+              Dynamic Projections
             </span>
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
@@ -166,7 +166,7 @@ export default function ForecastPage() {
                     Customizable Model Assumptions
                   </CardTitle>
                   <p className="text-xs text-muted-foreground">
-                    Edit financial variables to see deterministic multi-scenario projections update in real time.
+                    Adjust financial variables to see multi-scenario projections update in real time.
                   </p>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -423,7 +423,7 @@ export default function ForecastPage() {
                 <div>
                   <CardTitle className="text-base font-bold">Projected Month-End Balances & Flow</CardTitle>
                   <p className="text-xs text-muted-foreground">
-                    Deterministic month-by-month trajectory comparison over {projectionMonths} months.
+                    Month-by-month trajectory comparison over {projectionMonths} months.
                   </p>
                 </div>
                 <Badge variant="outline" className="text-[10px]">
@@ -532,7 +532,7 @@ export default function ForecastPage() {
 
                 <div className="p-4 rounded-xl bg-primary/10 border border-primary/30">
                   <p className="text-xs text-primary font-semibold">Months Covered</p>
-                  <p className="text-3xl font-black text-primary mt-0.5">
+                  <p className="text-3xl font-bold tracking-tight tabular-nums text-primary mt-0.5">
                     {emergencyAnalysis.monthsCovered}
                     <span className="text-sm font-semibold ml-1 text-muted-foreground">months</span>
                   </p>

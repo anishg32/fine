@@ -161,14 +161,11 @@ export default function AnalyticsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-extrabold tracking-tight text-foreground flex items-center gap-2">
-            Intelligence & Analytics
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20">
-              Phase 4 Intelligence
-            </span>
+          <h2 className="text-2xl font-bold tracking-tight text-foreground">
+            Financial Analytics
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Deterministic spending insights, health scoring, and explainable cash-flow metrics.
+            Spending insights, financial health scoring, and cash-flow trends.
           </p>
         </div>
 
@@ -262,10 +259,10 @@ export default function AnalyticsPage() {
             <div>
               <CardTitle className="text-base font-bold flex items-center gap-2">
                 <Activity className="h-4 w-4 text-primary" />
-                Transparent Financial Health Score
+                Financial Health Score
               </CardTitle>
               <p className="text-xs text-muted-foreground">
-                Explainable 0–100 score derived deterministically from 4 core budgeting factors.
+                Comprehensive 0–100 score based on 4 key budgeting and savings metrics.
               </p>
             </div>
             <div className="flex items-center gap-2">

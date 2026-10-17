@@ -31,7 +31,6 @@ import {
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import {
   Tooltip,
@@ -351,7 +350,7 @@ export default function DashboardPage() {
               </div>
             </CardHeader>
             <CardContent className="px-4 pb-4">
-              <div className="text-2xl font-black tracking-tight text-foreground">
+              <div className="text-2xl font-bold tracking-tight tabular-nums text-foreground">
                 {mounted ? (
                   <CountUp value={totalBalance} formatter={(v) => formatCurrency(v, currency)} />
                 ) : (
@@ -369,8 +368,7 @@ export default function DashboardPage() {
           </Card>
 
           {/* Card 2: Monthly Income */}
-          <Card className="rounded-2xl border-border bg-card hover:border-emerald-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-emerald-500/5 group relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-1 bg-emerald-400 opacity-80" />
+          <Card className="rounded-2xl border-border bg-card hover:border-emerald-500/40 transition-all duration-200 hover:shadow-md group relative">
             <CardHeader className="flex flex-row items-center justify-between pb-1.5 pt-4 px-4">
               <div className="flex items-center gap-1.5">
                 <CardTitle className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
@@ -387,12 +385,12 @@ export default function DashboardPage() {
                   </TooltipContent>
                 </Tooltip>
               </div>
-              <div className="h-7 w-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <div className="h-7 w-7 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center group-hover:scale-105 transition-transform">
                 <TrendingUp className="h-3.5 w-3.5" />
               </div>
             </CardHeader>
             <CardContent className="px-4 pb-4">
-              <div className="text-2xl font-black tracking-tight text-emerald-400">
+              <div className="text-2xl font-bold tracking-tight text-emerald-400 tabular-nums">
                 {mounted ? (
                   <CountUp value={currentIncome} formatter={(v) => formatCurrency(v, currency)} />
                 ) : (
@@ -411,8 +409,7 @@ export default function DashboardPage() {
           </Card>
 
           {/* Card 3: Monthly Expenses */}
-          <Card className="rounded-2xl border-border bg-card hover:border-rose-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-rose-500/5 group relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-1 bg-rose-400 opacity-80" />
+          <Card className="rounded-2xl border-border bg-card hover:border-rose-500/40 transition-all duration-200 hover:shadow-md group relative">
             <CardHeader className="flex flex-row items-center justify-between pb-1.5 pt-4 px-4">
               <div className="flex items-center gap-1.5">
                 <CardTitle className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
@@ -429,12 +426,12 @@ export default function DashboardPage() {
                   </TooltipContent>
                 </Tooltip>
               </div>
-              <div className="h-7 w-7 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <div className="h-7 w-7 rounded-lg bg-rose-500/10 text-rose-400 flex items-center justify-center group-hover:scale-105 transition-transform">
                 <TrendingDown className="h-3.5 w-3.5" />
               </div>
             </CardHeader>
             <CardContent className="px-4 pb-4">
-              <div className="text-2xl font-black tracking-tight text-rose-400">
+              <div className="text-2xl font-bold tracking-tight text-rose-400 tabular-nums">
                 {mounted ? (
                   <CountUp value={currentExpenses} formatter={(v) => formatCurrency(v, currency)} />
                 ) : (
@@ -454,8 +451,7 @@ export default function DashboardPage() {
           </Card>
 
           {/* Card 4: Net Cash Flow */}
-          <Card className="rounded-2xl border-border bg-card hover:border-cyan-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/5 group relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-1 bg-cyan-400 opacity-80" />
+          <Card className="rounded-2xl border-border bg-card hover:border-cyan-500/40 transition-all duration-200 hover:shadow-md group relative">
             <CardHeader className="flex flex-row items-center justify-between pb-1.5 pt-4 px-4">
               <div className="flex items-center gap-1.5">
                 <CardTitle className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
@@ -472,13 +468,13 @@ export default function DashboardPage() {
                   </TooltipContent>
                 </Tooltip>
               </div>
-              <div className="h-7 w-7 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <div className="h-7 w-7 rounded-lg bg-cyan-500/10 text-cyan-400 flex items-center justify-center group-hover:scale-105 transition-transform">
                 <Sparkles className="h-3.5 w-3.5" />
               </div>
             </CardHeader>
             <CardContent className="px-4 pb-4">
               <div
-                className={`text-2xl font-black tracking-tight ${
+                className={`text-2xl font-bold tracking-tight tabular-nums ${
                   netCashFlow >= 0 ? "text-cyan-400" : "text-rose-400"
                 }`}
               >
@@ -497,8 +493,7 @@ export default function DashboardPage() {
           </Card>
 
           {/* Card 5: Savings Goal Progress */}
-          <Card className="rounded-2xl border-border bg-card hover:border-amber-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-amber-500/5 group relative overflow-hidden">
-            <div className="absolute top-0 left-0 right-0 h-1 bg-amber-400 opacity-80" />
+          <Card className="rounded-2xl border-border bg-card hover:border-amber-500/40 transition-all duration-200 hover:shadow-md group relative">
             <CardHeader className="flex flex-row items-center justify-between pb-1.5 pt-4 px-4">
               <div className="flex items-center gap-1.5">
                 <CardTitle className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
@@ -515,12 +510,12 @@ export default function DashboardPage() {
                   </TooltipContent>
                 </Tooltip>
               </div>
-              <div className="h-7 w-7 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+              <div className="h-7 w-7 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center group-hover:scale-105 transition-transform">
                 <Target className="h-3.5 w-3.5" />
               </div>
             </CardHeader>
             <CardContent className="px-4 pb-4">
-              <div className="text-2xl font-black tracking-tight text-amber-400">
+              <div className="text-2xl font-bold tracking-tight text-amber-400 tabular-nums">
                 {mounted ? (
                   <CountUp value={goalStats.overallPct} suffix="%" />
                 ) : (
@@ -537,21 +532,21 @@ export default function DashboardPage() {
       </TooltipProvider>
 
       {/* ============================================================
-          3. FYZA AI CONTEXTUAL INSIGHT HERO BANNER
+          3. FINANCIAL SUMMARY & INSIGHTS HERO BANNER
           ============================================================ */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-surface via-surface-secondary to-surface border border-primary/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm relative overflow-hidden">
+      <div className="p-4 sm:p-5 rounded-2xl bg-surface/80 border border-border/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm relative overflow-hidden">
         <div className="flex items-start gap-3.5">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary/25 to-secondary/25 text-primary flex items-center justify-center shrink-0 shadow-sm border border-primary/30">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center shrink-0 shadow-sm border border-primary/20">
             <Sparkles className="h-5 w-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h4 className="text-sm font-extrabold text-foreground">
-                Fyza Financial Intelligence
+              <h4 className="text-sm font-bold text-foreground">
+                Financial Summary & Insights
               </h4>
-              <Badge variant="default" className="text-[10px] py-0 px-2 font-black uppercase">
-                Grounded Math
-              </Badge>
+              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Current Cycle
+              </span>
             </div>
             <p className="text-xs text-muted-foreground mt-1 leading-relaxed max-w-2xl">
               {health.insights[0] ||
@@ -564,17 +559,17 @@ export default function DashboardPage() {
           <Button
             size="sm"
             onClick={() => setIsAiDialogOpen(true)}
-            className="bg-primary text-black font-extrabold hover:bg-primary/90 text-xs shadow-md shadow-primary/20 rounded-xl"
+            className="bg-primary text-black font-semibold hover:bg-primary/90 text-xs shadow-sm rounded-xl"
           >
-            <Sparkles className="mr-1.5 h-3.5 w-3.5" /> AI Quick Add
+            <Sparkles className="mr-1.5 h-3.5 w-3.5" /> Quick Add
           </Button>
           <Link href="/app/ai-assistant">
             <Button
               size="sm"
               variant="outline"
-              className="border-primary/40 text-primary hover:bg-primary/10 text-xs font-bold whitespace-nowrap rounded-xl shadow-sm"
+              className="border-border hover:bg-surface-elevated text-xs font-semibold whitespace-nowrap rounded-xl shadow-sm"
             >
-              Chat with Fyza AI <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+              Financial Assistant <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
             </Button>
           </Link>
         </div>
@@ -786,7 +781,7 @@ export default function DashboardPage() {
                   <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
                     Total Spent
                   </span>
-                  <span className="text-base font-black text-foreground">
+                  <span className="text-base font-bold tabular-nums text-foreground">
                     {formatCurrency(currentExpenses, currency)}
                   </span>
                 </div>
@@ -944,7 +939,7 @@ export default function DashboardPage() {
                         <span className="h-2 w-2 rounded-full" style={{ backgroundColor: goal.color || "#31E6A0" }} />
                         <span className="text-xs font-bold text-foreground truncate">{goal.name}</span>
                       </div>
-                      <span className="text-xs font-black text-primary">{pct}%</span>
+                      <span className="text-xs font-bold tabular-nums text-primary">{pct}%</span>
                     </div>
                     <Progress value={pct} className="h-2 rounded-full" />
                     <div className="flex items-center justify-between text-[11px] text-muted-foreground">
@@ -1067,7 +1062,7 @@ export default function DashboardPage() {
                       <td className="py-3 text-muted-foreground whitespace-nowrap font-medium">
                         {tx.transaction_date}
                       </td>
-                      <td className="py-3 text-right font-black whitespace-nowrap">
+                      <td className="py-3 text-right font-semibold whitespace-nowrap tabular-nums">
                         <span
                           className={
                             isIncome

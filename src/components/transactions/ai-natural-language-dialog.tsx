@@ -22,7 +22,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { fyzaStore } from "@/lib/store";
 import { parseNaturalLanguageTransaction, type ParsedTransactionResult } from "@/lib/ai-nlp";
 import { formatCurrency } from "@/lib/utils";
@@ -231,21 +230,18 @@ export function AINaturalLanguageDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl p-0 overflow-hidden border-border bg-card shadow-2xl rounded-2xl">
-        {/* Glowing Top Banner */}
-        <div className="bg-gradient-to-r from-primary/15 via-secondary/15 to-primary/10 border-b border-border/80 px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="h-9 w-9 rounded-xl bg-primary/20 text-primary flex items-center justify-center border border-primary/30 shadow-inner">
-              <Sparkles className="h-5 w-5 animate-pulse" />
+        {/* Refined Header */}
+        <div className="bg-surface/80 border-b border-border px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl bg-primary/10 text-primary flex items-center justify-center border border-primary/20 shrink-0">
+              <Sparkles className="h-4 w-4" />
             </div>
             <div>
-              <DialogTitle className="text-base font-extrabold text-foreground tracking-tight flex items-center gap-2">
-                Fyza AI Natural Language
-                <Badge variant="outline" className="border-primary/40 text-primary text-[10px] py-0 px-1.5 font-bold uppercase">
-                  Zero Form Friction
-                </Badge>
+              <DialogTitle className="text-base font-bold text-foreground tracking-tight">
+                Quick Add Transaction
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                Type or speak in plain English. Fyza automatically parses amounts, accounts, dates, and categories.
+                Type or speak in plain English — amounts, categories, and accounts are detected automatically.
               </DialogDescription>
             </div>
           </div>
@@ -299,12 +295,12 @@ export function AINaturalLanguageDialog({
           {parsed && (
             <div className="rounded-xl border border-primary/25 bg-surface-secondary/60 p-4 space-y-3.5 animate-in fade-in slide-in-from-top-2 duration-200">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                  <CheckCircle2 className="h-4 w-4 text-primary" />
-                  AI Intelligence Extracted
+                <span className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  Transaction Details
                 </span>
-                <span className="text-[11px] font-semibold text-primary px-2 py-0.5 rounded-full bg-primary/10 border border-primary/20">
-                  {parsed.confidence}% Confidence
+                <span className="text-[11px] font-medium text-emerald-400 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                  Ready to save
                 </span>
               </div>
 
@@ -471,7 +467,7 @@ export function AINaturalLanguageDialog({
                 ) : (
                   <>
                     <Sparkles className="h-3.5 w-3.5" />
-                    Log Transaction
+                    Save Transaction
                   </>
                 )}
               </Button>

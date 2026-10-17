@@ -33,7 +33,7 @@ const NAV_ITEMS = [
   { label: "Savings Goals", href: "/app/goals", icon: Target },
   { label: "Analytics", href: "/app/analytics", icon: BarChart3 },
   { label: "Forecast", href: "/app/forecast", icon: TrendingUp },
-  { label: "Fyza AI", href: "/app/ai-assistant", icon: Bot, badge: "AI" },
+  { label: "Assistant", href: "/app/ai-assistant", icon: Bot },
   { label: "Accounts", href: "/app/accounts", icon: Wallet },
   { label: "Reports", href: "/app/reports", icon: FileText },
   { label: "Settings", href: "/app/settings", icon: Settings },
@@ -66,7 +66,7 @@ export function AppSidebar() {
                 </span>
               </span>
               <span className="text-[10px] text-muted-foreground font-medium truncate">
-                Wealth & Flow Engine
+                Personal Finance
               </span>
             </div>
           )}

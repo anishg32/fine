@@ -333,19 +333,39 @@
 }
 
 /* ============================================================
-   Base Typography & Global Defaults
+   Base Typography & Human-Crafted Aesthetic
    ============================================================ */
 
 * {
   border-color: var(--color-border);
 }
 
+html {
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  text-rendering: optimizeLegibility;
+}
+
 body {
-  font-family: var(--font-sans);
+  font-family: var(--font-sans), -apple-system, BlinkMacSystemFont, "Plus Jakarta Sans", "Inter", sans-serif;
   background-color: var(--color-background);
   color: var(--color-foreground);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  letter-spacing: -0.011em;
+}
+
+h1, h2, h3, h4 {
+  letter-spacing: -0.025em;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* Tabular figures for numbers, tables, and financial amounts */
+table td,
+table th,
+.tabular-nums,
+[data-amount],
+.font-mono {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Custom Sleek Scrollbar */

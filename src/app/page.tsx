@@ -338,10 +338,10 @@ export default function LandingPage() {
           variants={staggerContainer}
           className="max-w-4xl mx-auto"
         >
-          {/* Animated Eyebrow Badge */}
-          <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-primary/30 bg-primary/10 text-primary text-xs font-semibold mb-8 shadow-sm shadow-primary/10">
-            <Sparkles className="h-3.5 w-3.5 animate-pulse" />
-            <span>Next-Generation AI Personal Finance Platform</span>
+          {/* Eyebrow Badge */}
+          <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-border/80 bg-surface/80 text-foreground text-xs font-medium mb-8 backdrop-blur-sm shadow-sm">
+            <span className="h-2 w-2 rounded-full bg-primary" />
+            <span className="text-muted-foreground">Modern Personal Finance & Cash Flow Intelligence</span>
           </motion.div>
 
           {/* EXACT HERO HEADLINE */}
@@ -358,7 +358,7 @@ export default function LandingPage() {
             variants={fadeInUp}
             className="text-base sm:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed font-normal"
           >
-            Master cash flow, plan dynamic budgets, track goal progress, and forecast your financial future with integer-accurate analytics and an intelligent AI co-pilot.
+            Master cash flow, plan dynamic budgets, track goal progress, and forecast your financial future with integer-accurate analytics and an intelligent financial assistant.
           </motion.p>
 
           {/* 4 & 5. PRIMARY & SECONDARY CTAS */}
@@ -403,8 +403,8 @@ export default function LandingPage() {
             <div className="p-3 rounded-xl border border-secondary/30 bg-secondary/10 backdrop-blur-md flex items-center gap-2.5 text-left">
               <Bot className="h-4 w-4 text-secondary shrink-0" />
               <div className="min-w-0">
-                <p className="text-[10px] uppercase font-bold text-secondary">Fyza AI Co-Pilot</p>
-                <p className="text-xs sm:text-sm font-extrabold text-foreground truncate">Context Grounded</p>
+                <p className="text-[10px] uppercase font-bold text-secondary">Smart Assistant</p>
+                <p className="text-xs sm:text-sm font-extrabold text-foreground truncate">Insights & Advice</p>
               </div>
             </div>
 
@@ -458,7 +458,7 @@ export default function LandingPage() {
                   activePreviewTab === "ai" ? "bg-secondary text-white" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                Fyza AI
+                Assistant
               </button>
               <button
                 onClick={() => setActivePreviewTab("budgets")}
@@ -565,7 +565,7 @@ export default function LandingPage() {
                     <div>
                       <div className="flex items-center gap-2 mb-2">
                         <Bot className="h-4 w-4 text-primary" />
-                        <span className="text-xs font-semibold text-foreground">Fyza AI Grounded Insight</span>
+                        <span className="text-xs font-semibold text-foreground">Financial Health Insight</span>
                       </div>
                       <p className="text-xs text-muted-foreground leading-relaxed">
                         &quot;Your dining and shopping expenses are trending 14% lower than last month, leaving you with ₹38,400 surplus to deploy toward your Emergency Fund.&quot;
@@ -584,7 +584,7 @@ export default function LandingPage() {
               </div>
             )}
 
-            {/* TAB VIEW: FYZA AI PREVIEW */}
+            {/* TAB VIEW: ASSISTANT PREVIEW */}
             {activePreviewTab === "ai" && (
               <div className="space-y-4 animate-fade-in">
                 <div className="flex flex-wrap gap-2 mb-3">
@@ -608,7 +608,7 @@ export default function LandingPage() {
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold text-foreground flex items-center gap-2">
                       <Bot className="h-4 w-4 text-secondary" />
-                      Fyza AI Deterministic Response
+                      Assistant Analysis & Insights
                     </span>
                     <Badge variant="outline" className="text-[10px] bg-secondary/20 text-white border-secondary/30">
                       {AI_DEMO_SCENARIOS[activeAiScenario].badge}
@@ -771,12 +771,12 @@ export default function LandingPage() {
               </p>
             </div>
 
-            {/* Feature 4: Fyza AI */}
+            {/* Feature 4: Financial Assistant */}
             <div className="p-6 rounded-2xl border border-border bg-card hover:border-primary/40 transition-all group">
               <div className="h-12 w-12 rounded-xl bg-secondary/15 text-secondary flex items-center justify-center mb-5 group-hover:scale-110 transition-transform">
                 <Bot className="h-6 w-6" />
               </div>
-              <h4 className="text-lg font-bold text-foreground mb-2">Fyza AI Financial Co-Pilot</h4>
+              <h4 className="text-lg font-bold text-foreground mb-2">Context-Aware Financial Assistant</h4>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Ask natural questions about spending trends, recurring bills, and budget gaps. Server-authenticated and grounded in exact database math without hallucination.
               </p>
@@ -857,13 +857,13 @@ export default function LandingPage() {
               <span className="text-4xl font-extrabold text-cyan-400/30 mb-4 block font-mono">
                 03
               </span>
-              <h4 className="text-xl font-bold text-foreground mb-3">Forecast & Grow with AI</h4>
+              <h4 className="text-xl font-bold text-foreground mb-3">Forecast & Grow Wealth</h4>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                Converse with Fyza AI to test big purchase affordability, simulate compound wealth returns, and hit milestone savings goals on schedule.
+                Converse with your assistant to test purchase affordability, simulate compound wealth returns, and hit milestone savings goals on schedule.
               </p>
             </div>
             <div className="mt-6 pt-4 border-t border-border/60 text-xs font-semibold text-cyan-400">
-              ✓ Deterministic Advice
+              ✓ Accurate Guidance
             </div>
           </div>
         </div>
@@ -1077,7 +1077,7 @@ export default function LandingPage() {
               </div>
               <div className="flex items-start gap-3">
                 <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <span className="text-sm text-foreground">Grounded, deterministic AI</span>
+                <span className="text-sm text-foreground">Accurate, ledger-grounded assistant</span>
               </div>
             </div>
           </div>

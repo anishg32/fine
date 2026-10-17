@@ -222,7 +222,7 @@ export default function ReportsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-black text-emerald-400">
+            <div className="text-2xl font-bold tracking-tight tabular-nums text-emerald-400">
               {formatCurrency(totalIncomeMinor, currency)}
             </div>
             <p className="text-[11px] text-muted-foreground mt-1">
@@ -238,7 +238,7 @@ export default function ReportsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-black text-rose-400">
+            <div className="text-2xl font-bold tracking-tight tabular-nums text-rose-400">
               {formatCurrency(totalExpenseMinor, currency)}
             </div>
             <p className="text-[11px] text-muted-foreground mt-1">
@@ -255,7 +255,7 @@ export default function ReportsPage() {
           </CardHeader>
           <CardContent>
             <div
-              className={`text-2xl font-black ${
+              className={`text-2xl font-bold tracking-tight tabular-nums ${
                 netCashFlowMinor >= 0 ? "text-emerald-400" : "text-rose-400"
               }`}
             >
@@ -275,7 +275,7 @@ export default function ReportsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-black text-primary">
+            <div className="text-2xl font-bold tracking-tight tabular-nums text-primary">
               {formatCurrency(netWorthMinor, currency)}
             </div>
             <p className="text-[11px] text-muted-foreground mt-1">
@@ -370,7 +370,7 @@ export default function ReportsPage() {
               </div>
               <div className="flex justify-between py-2.5 pt-3 font-bold text-sm bg-surface-secondary/40 px-3 rounded-xl border border-border">
                 <span className="text-foreground">Consolidated Net Worth</span>
-                <span className="text-primary font-black">
+                <span className="text-primary font-bold tabular-nums">
                   {formatCurrency(netWorthMinor, currency)}
                 </span>
               </div>

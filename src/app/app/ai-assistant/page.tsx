@@ -7,10 +7,8 @@ import {
   Sparkles,
   Trash2,
   User,
-  ShieldCheck,
   RefreshCw,
   RotateCcw,
-  Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,7 +48,7 @@ export default function AIAssistantPage() {
       conversation_id: "conv-1",
       role: "assistant",
       content:
-        "Hello! I am **Fyza AI**, your grounded personal finance intelligence assistant.\n\nAll financial figures and totals I provide are derived directly from your **verified ledger records and deterministic math engines**.\n\nSelect any question below or ask me about your spending, emergency buffer, budget caps, or savings forecasts!",
+        "Hello! I am your **Fyza financial assistant**.\n\nI have real-time visibility into your accounts, recent transactions, and active budget limits.\n\nSelect any question below or ask me about your spending patterns, emergency runway, or savings milestones!",
       created_at: "2026-10-15T00:00:00.000Z",
       source: "deterministic_engine",
     },
@@ -236,18 +234,18 @@ export default function AIAssistantPage() {
       {/* Header with Verified Facts Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-border">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-black shadow-lg shadow-primary/20 shrink-0">
+          <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-sm shrink-0">
             <Bot className="h-5 w-5" />
           </div>
           <div>
             <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-              Fyza Financial Intelligence
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/20 flex items-center gap-1">
-                <ShieldCheck className="h-3 w-3" /> Grounded Ledger Math
+              Financial Assistant
+              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Active
               </span>
             </h2>
             <p className="text-xs text-muted-foreground">
-              Period: <span className="font-semibold text-foreground">{currentPeriodName}</span> • Verified Integer Paired Balances
+              Period: <span className="font-semibold text-foreground">{currentPeriodName}</span> • Real-time ledger insights
             </p>
           </div>
         </div>
@@ -325,15 +323,10 @@ export default function AIAssistantPage() {
                 </div>
 
                 {!isUser && (
-                  <div className="flex items-center gap-2 px-1 text-[10px] text-muted-foreground">
-                    <span className="flex items-center gap-1 text-primary font-medium">
-                      <Zap className="h-2.5 w-2.5" />
-                      {m.source === "live_ai"
-                        ? "Grounded Live AI"
-                        : "Deterministic Financial Engine"}
-                    </span>
+                  <div className="flex items-center gap-2 px-1 text-[11px] text-muted-foreground">
+                    <span className="font-medium text-foreground/80">Fyza Assistant</span>
                     <span>•</span>
-                    <span>Verified Snapshot: {currentPeriodName}</span>
+                    <span>{currentPeriodName}</span>
                   </div>
                 )}
               </div>
