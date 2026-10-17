@@ -23,8 +23,9 @@ function LoginForm() {
   const [googleLoading, setGoogleLoading] = useState(false);
 
   React.useEffect(() => {
-    if (searchParams.get("error") === "auth_callback_failed") {
-      toast.error("Google authentication failed. Please try again.");
+    const errorParam = searchParams.get("error");
+    if (errorParam) {
+      toast.error(decodeURIComponent(errorParam));
     }
   }, [searchParams]);
 
