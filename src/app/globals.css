@@ -1,0 +1,457 @@
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap");
+@import "tailwindcss";
+
+/* ============================================================
+   Fyza Design System — 5 Multi-Colour Themes & Dynamic Tokens
+   ============================================================ */
+
+@custom-variant dark (&:is(.dark *, [data-theme="emerald-midnight"] *, [data-theme="violet-intelligence"] *, [data-theme="ocean-blue"] *, [data-theme="amber-wealth"] *));
+
+@theme inline {
+  --font-sans: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  /* Baseline mapped to CSS Custom Properties */
+  --color-background: var(--color-background);
+  --color-surface: var(--color-surface);
+  --color-surface-secondary: var(--color-surface-secondary);
+  --color-surface-elevated: var(--color-surface-elevated);
+  --color-primary: var(--color-primary);
+  --color-primary-foreground: var(--color-primary-foreground);
+  --color-secondary: var(--color-secondary);
+  --color-secondary-foreground: var(--color-secondary-foreground);
+  --color-accent: var(--color-accent);
+  --color-accent-foreground: var(--color-accent-foreground);
+  --color-foreground: var(--color-foreground);
+  --color-muted: var(--color-muted);
+  --color-muted-foreground: var(--color-muted-foreground);
+  --color-border: var(--color-border);
+  --color-input: var(--color-input);
+  --color-ring: var(--color-ring);
+  --color-destructive: var(--color-destructive);
+  --color-destructive-foreground: var(--color-destructive-foreground);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-info: var(--color-info);
+
+  --color-card: var(--color-card);
+  --color-card-foreground: var(--color-card-foreground);
+  --color-popover: var(--color-popover);
+  --color-popover-foreground: var(--color-popover-foreground);
+
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1.125rem;
+  --radius-2xl: 1.5rem;
+
+  --color-sidebar: var(--color-sidebar);
+  --color-sidebar-foreground: var(--color-sidebar-foreground);
+  --color-sidebar-border: var(--color-sidebar-border);
+  --color-sidebar-accent: var(--color-sidebar-accent);
+  --color-sidebar-accent-foreground: var(--color-sidebar-accent-foreground);
+
+  --color-chart-1: var(--color-chart-1);
+  --color-chart-2: var(--color-chart-2);
+  --color-chart-3: var(--color-chart-3);
+  --color-chart-4: var(--color-chart-4);
+  --color-chart-5: var(--color-chart-5);
+
+  --color-semantic-income: var(--color-semantic-income);
+  --color-semantic-expense: var(--color-semantic-expense);
+  --color-semantic-transfer: var(--color-semantic-transfer);
+  --color-semantic-goal: var(--color-semantic-goal);
+  --color-semantic-ai: var(--color-semantic-ai);
+}
+
+/* ============================================================
+   THEME 1: Emerald Midnight (Default)
+   Rich obsidian, deep jade accents, cyber-emerald mint
+   ============================================================ */
+:root,
+[data-theme="emerald-midnight"] {
+  --color-background: #080C10;
+  --color-sidebar: #0C1117;
+  --color-surface: #111923;
+  --color-surface-secondary: #141F2B;
+  --color-surface-elevated: #17212C;
+  --color-primary: #31E6A0;
+  --color-primary-foreground: #080C10;
+  --color-secondary: #23D5C5;
+  --color-secondary-foreground: #080C10;
+  --color-accent: #31E6A0;
+  --color-accent-foreground: #080C10;
+  --color-foreground: #F4F7FA;
+  --color-muted: #17212C;
+  --color-muted-foreground: #95A2B3;
+  --color-border: rgba(255, 255, 255, 0.08);
+  --color-input: rgba(255, 255, 255, 0.08);
+  --color-ring: #31E6A0;
+  --color-destructive: #FF5A79;
+  --color-destructive-foreground: #FFFFFF;
+  --color-success: #31E6A0;
+  --color-warning: #FFC45C;
+  --color-info: #55A6FF;
+
+  --color-card: #111923;
+  --color-card-foreground: #F4F7FA;
+  --color-popover: #17212C;
+  --color-popover-foreground: #F4F7FA;
+
+  --color-sidebar-border: rgba(255, 255, 255, 0.07);
+  --color-sidebar-accent: #17212C;
+  --color-sidebar-accent-foreground: #31E6A0;
+
+  --color-chart-1: #31E6A0;
+  --color-chart-2: #23D5C5;
+  --color-chart-3: #55A6FF;
+  --color-chart-4: #FFC45C;
+  --color-chart-5: #AA83FF;
+
+  --color-semantic-income: #31E6A0;
+  --color-semantic-expense: #FF5A79;
+  --color-semantic-transfer: #55A6FF;
+  --color-semantic-goal: #FFC45C;
+  --color-semantic-ai: #AA83FF;
+
+  --theme-glow: rgba(49, 230, 160, 0.12);
+  --theme-gradient: linear-gradient(135deg, #31E6A0, #23D5C5);
+}
+
+/* ============================================================
+   THEME 2: Violet Intelligence
+   Deep violet abyss, intellectual neon amethyst & neural magenta
+   ============================================================ */
+[data-theme="violet-intelligence"] {
+  --color-background: #090714;
+  --color-sidebar: #0F0C20;
+  --color-surface: #14102B;
+  --color-surface-secondary: #191435;
+  --color-surface-elevated: #1F1942;
+  --color-primary: #9D68FF;
+  --color-primary-foreground: #FFFFFF;
+  --color-secondary: #38E1FF;
+  --color-secondary-foreground: #090714;
+  --color-accent: #9D68FF;
+  --color-accent-foreground: #FFFFFF;
+  --color-foreground: #F8FAFC;
+  --color-muted: #1F1942;
+  --color-muted-foreground: #A5B4FC;
+  --color-border: rgba(165, 180, 252, 0.12);
+  --color-input: rgba(165, 180, 252, 0.12);
+  --color-ring: #9D68FF;
+  --color-destructive: #FF5388;
+  --color-destructive-foreground: #FFFFFF;
+  --color-success: #38E1FF;
+  --color-warning: #FBBF24;
+  --color-info: #6366F1;
+
+  --color-card: #14102B;
+  --color-card-foreground: #F8FAFC;
+  --color-popover: #1F1942;
+  --color-popover-foreground: #F8FAFC;
+
+  --color-sidebar-border: rgba(165, 180, 252, 0.1);
+  --color-sidebar-accent: #1F1942;
+  --color-sidebar-accent-foreground: #9D68FF;
+
+  --color-chart-1: #9D68FF;
+  --color-chart-2: #38E1FF;
+  --color-chart-3: #FF65B2;
+  --color-chart-4: #FBBF24;
+  --color-chart-5: #6366F1;
+
+  --color-semantic-income: #38E1FF;
+  --color-semantic-expense: #FF5388;
+  --color-semantic-transfer: #6366F1;
+  --color-semantic-goal: #FBBF24;
+  --color-semantic-ai: #9D68FF;
+
+  --theme-glow: rgba(157, 104, 255, 0.16);
+  --theme-gradient: linear-gradient(135deg, #9D68FF, #38E1FF);
+}
+
+/* ============================================================
+   THEME 3: Ocean Blue
+   Deep maritime navy, oceanic cyan & high-contrast sapphire
+   ============================================================ */
+[data-theme="ocean-blue"] {
+  --color-background: #050B14;
+  --color-sidebar: #08101E;
+  --color-surface: #0E1A2D;
+  --color-surface-secondary: #122138;
+  --color-surface-elevated: #172A47;
+  --color-primary: #3894FF;
+  --color-primary-foreground: #FFFFFF;
+  --color-secondary: #22D3EE;
+  --color-secondary-foreground: #050B14;
+  --color-accent: #3894FF;
+  --color-accent-foreground: #FFFFFF;
+  --color-foreground: #F0F9FF;
+  --color-muted: #172A47;
+  --color-muted-foreground: #7DD3FC;
+  --color-border: rgba(56, 148, 255, 0.12);
+  --color-input: rgba(56, 148, 255, 0.12);
+  --color-ring: #3894FF;
+  --color-destructive: #F43F5E;
+  --color-destructive-foreground: #FFFFFF;
+  --color-success: #34D399;
+  --color-warning: #F59E0B;
+  --color-info: #3894FF;
+
+  --color-card: #0E1A2D;
+  --color-card-foreground: #F0F9FF;
+  --color-popover: #172A47;
+  --color-popover-foreground: #F0F9FF;
+
+  --color-sidebar-border: rgba(56, 148, 255, 0.1);
+  --color-sidebar-accent: #172A47;
+  --color-sidebar-accent-foreground: #3894FF;
+
+  --color-chart-1: #3894FF;
+  --color-chart-2: #22D3EE;
+  --color-chart-3: #34D399;
+  --color-chart-4: #F59E0B;
+  --color-chart-5: #818CF8;
+
+  --color-semantic-income: #34D399;
+  --color-semantic-expense: #F43F5E;
+  --color-semantic-transfer: #3894FF;
+  --color-semantic-goal: #F59E0B;
+  --color-semantic-ai: #818CF8;
+
+  --theme-glow: rgba(56, 148, 255, 0.14);
+  --theme-gradient: linear-gradient(135deg, #3894FF, #22D3EE);
+}
+
+/* ============================================================
+   THEME 4: Amber Wealth
+   Obsidian gold, burnished bronze, warm sovereign wealth
+   ============================================================ */
+[data-theme="amber-wealth"] {
+  --color-background: #0A0805;
+  --color-sidebar: #120E08;
+  --color-surface: #1A140B;
+  --color-surface-secondary: #221B0F;
+  --color-surface-elevated: #2B2213;
+  --color-primary: #F59E0B;
+  --color-primary-foreground: #0A0805;
+  --color-secondary: #FBBF24;
+  --color-secondary-foreground: #0A0805;
+  --color-accent: #F59E0B;
+  --color-accent-foreground: #0A0805;
+  --color-foreground: #FFFBEB;
+  --color-muted: #2B2213;
+  --color-muted-foreground: #D97706;
+  --color-border: rgba(245, 158, 11, 0.14);
+  --color-input: rgba(245, 158, 11, 0.14);
+  --color-ring: #F59E0B;
+  --color-destructive: #EF4444;
+  --color-destructive-foreground: #FFFFFF;
+  --color-success: #10B981;
+  --color-warning: #FBBF24;
+  --color-info: #60A5FA;
+
+  --color-card: #1A140B;
+  --color-card-foreground: #FFFBEB;
+  --color-popover: #2B2213;
+  --color-popover-foreground: #FFFBEB;
+
+  --color-sidebar-border: rgba(245, 158, 11, 0.12);
+  --color-sidebar-accent: #2B2213;
+  --color-sidebar-accent-foreground: #F59E0B;
+
+  --color-chart-1: #F59E0B;
+  --color-chart-2: #FBBF24;
+  --color-chart-3: #10B981;
+  --color-chart-4: #60A5FA;
+  --color-chart-5: #C084FC;
+
+  --color-semantic-income: #10B981;
+  --color-semantic-expense: #EF4444;
+  --color-semantic-transfer: #60A5FA;
+  --color-semantic-goal: #F59E0B;
+  --color-semantic-ai: #C084FC;
+
+  --theme-glow: rgba(245, 158, 11, 0.14);
+  --theme-gradient: linear-gradient(135deg, #F59E0B, #FBBF24);
+}
+
+/* ============================================================
+   THEME 5: Clean Light
+   Executive minimalist light mode, crisp slate borders, emerald accent
+   ============================================================ */
+[data-theme="clean-light"],
+:root.light,
+:root:not(.dark):not([data-theme="emerald-midnight"]):not([data-theme="violet-intelligence"]):not([data-theme="ocean-blue"]):not([data-theme="amber-wealth"]) {
+  --color-background: #F8FAFC;
+  --color-sidebar: #F1F5F9;
+  --color-surface: #FFFFFF;
+  --color-surface-secondary: #F8FAFC;
+  --color-surface-elevated: #FFFFFF;
+  --color-primary: #0D9488;
+  --color-primary-foreground: #FFFFFF;
+  --color-secondary: #0284C7;
+  --color-secondary-foreground: #FFFFFF;
+  --color-accent: #0D9488;
+  --color-accent-foreground: #FFFFFF;
+  --color-foreground: #0F172A;
+  --color-muted: #F1F5F9;
+  --color-muted-foreground: #64748B;
+  --color-border: rgba(15, 23, 42, 0.1);
+  --color-input: rgba(15, 23, 42, 0.1);
+  --color-ring: #0D9488;
+  --color-destructive: #E11D48;
+  --color-destructive-foreground: #FFFFFF;
+  --color-success: #059669;
+  --color-warning: #D97706;
+  --color-info: #0284C7;
+
+  --color-card: #FFFFFF;
+  --color-card-foreground: #0F172A;
+  --color-popover: #FFFFFF;
+  --color-popover-foreground: #0F172A;
+
+  --color-sidebar-border: rgba(15, 23, 42, 0.08);
+  --color-sidebar-accent: #E2E8F0;
+  --color-sidebar-accent-foreground: #0D9488;
+
+  --color-chart-1: #0D9488;
+  --color-chart-2: #0284C7;
+  --color-chart-3: #E11D48;
+  --color-chart-4: #D97706;
+  --color-chart-5: #7C3AED;
+
+  --color-semantic-income: #059669;
+  --color-semantic-expense: #E11D48;
+  --color-semantic-transfer: #0284C7;
+  --color-semantic-goal: #D97706;
+  --color-semantic-ai: #7C3AED;
+
+  --theme-glow: rgba(13, 148, 136, 0.12);
+  --theme-gradient: linear-gradient(135deg, #0D9488, #0284C7);
+}
+
+/* ============================================================
+   Base Typography & Global Defaults
+   ============================================================ */
+
+* {
+  border-color: var(--color-border);
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom Sleek Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-muted-foreground);
+  border-radius: 9999px;
+  opacity: 0.35;
+}
+::-webkit-scrollbar-thumb:hover {
+  opacity: 0.65;
+}
+
+/* Accessible focus ring */
+:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+::selection {
+  background-color: var(--color-primary);
+  color: var(--color-primary-foreground);
+}
+
+/* ============================================================
+   Glassmorphism & Surface Utilities
+   ============================================================ */
+
+.fyza-glass {
+  background: rgba(17, 25, 35, 0.72);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid var(--color-border);
+}
+
+[data-theme="clean-light"] .fyza-glass {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+}
+
+.ambient-glow {
+  position: absolute;
+  pointer-events: none;
+  border-radius: 9999px;
+  filter: blur(80px);
+  opacity: 0.45;
+  background: var(--theme-glow);
+}
+
+.gradient-card-border {
+  position: relative;
+}
+.gradient-card-border::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, var(--color-primary), transparent 60%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+/* ============================================================
+   Keyframe Animations
+   ============================================================ */
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(0.98); }
+}
+
+@keyframes shimmer-sweep {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes float-gentle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 3s ease-in-out infinite;
+}
+
+.animate-float-gentle {
+  animation: float-gentle 4s ease-in-out infinite;
+}
+
+/* Respect Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
