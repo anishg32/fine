@@ -13,6 +13,7 @@ interface AuthContextType {
   isDemoMode: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: string | null }>;
+  signInWithGoogle: () => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
   updateProfile: (data: Partial<Profile>) => Promise<{ error: string | null }>;
@@ -195,6 +196,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const signInWithGoogle = async () => {
+    if (!hasSupabase) {
+      initDemoUser();
+      return { error: null };
+    }
+
+    try {
+      const supabase = createClient();
+      if (!supabase) return { error: "Supabase client not initialized" };
+
+      setDemoCookie(false);
+      if (typeof localStorage !== "undefined") {
+        localStorage.removeItem("fyza_demo_mode");
+      }
+
+      const redirectOrigin =
+        typeof window !== "undefined" && window.location.origin
+          ? window.location.origin
+          : process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${redirectOrigin}/auth/callback`,
+          queryParams: {
+            access_type: "offline",
+            prompt: "consent",
+          },
+        },
+      });
+
+      if (error) return { error: error.message };
+      return { error: null };
+    } catch (err: unknown) {
+      return { error: (err as Error).message };
+    }
+  };
+
   const signOut = async () => {
     if (hasSupabase) {
       try {
@@ -261,6 +300,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isDemoMode,
         signIn,
         signUp,
+        signInWithGoogle,
         signOut,
         resetPassword,
         updateProfile,
