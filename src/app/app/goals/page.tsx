@@ -2,24 +2,12 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import {
-  Target,
   Plus,
   Calendar,
-  Sparkles,
-  TrendingUp,
-  Shield,
-  Laptop,
-  Plane,
-  Home,
-  CheckCircle2,
-  MoreHorizontal,
   Trash2,
   Sliders,
   AlertTriangle,
-  Info,
   Clock,
-  ArrowRight,
-  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,7 +38,7 @@ import {
   calculateNetCashFlow,
   type SmartGoalPacingOptions,
 } from "@/lib/calculations";
-import { formatCurrency, toMinorUnits, toMajorUnits } from "@/lib/utils";
+import { formatCurrency, toMinorUnits } from "@/lib/utils";
 import type { Goal, GoalCategory, Transaction } from "@/lib/types";
 import { GOAL_CATEGORIES } from "@/lib/constants";
 import { toast } from "sonner";

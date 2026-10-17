@@ -11,9 +11,7 @@ import type {
   Category,
   Budget,
   Goal,
-  GoalContribution,
   RecurringTransaction,
-  RecurringStatus,
   CalendarEvent,
   CalendarEventType,
   Notification,
@@ -1228,7 +1226,7 @@ class FyzaStore {
     return updated;
   }
 
-  public contributeToGoal(goalId: string, amountMinor: number, note?: string): void {
+  public contributeToGoal(goalId: string, amountMinor: number, _note?: string): void {
     if (!this.isBrowser()) return;
     const goals = this.getGoals();
     const idx = goals.findIndex((g) => g.id === goalId);

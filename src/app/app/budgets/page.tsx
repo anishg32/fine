@@ -1,17 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import {
-  PieChart,
-  Plus,
-  AlertCircle,
-  CheckCircle2,
-  Bell,
-  ArrowRight,
-  TrendingDown,
-  Edit2,
-  Trash2,
-} from "lucide-react";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";

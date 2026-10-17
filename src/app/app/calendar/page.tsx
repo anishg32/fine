@@ -1,26 +1,15 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   Calendar as CalendarIcon,
   ChevronLeft,
   ChevronRight,
-  Plus,
-  Filter,
   CreditCard,
-  Target,
   ArrowDownRight,
   ArrowUpRight,
-  AlertCircle,
-  CheckCircle2,
   ExternalLink,
   Check,
-  Clock,
-  Sparkles,
-  Search,
-  List,
-  Grid,
-  CalendarDays,
   Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -46,7 +35,6 @@ import type {
   CalendarEvent,
   CalendarEventType,
   Category,
-  Account,
   Profile,
 } from "@/lib/types";
 import { toast } from "sonner";
@@ -73,19 +61,16 @@ export default function FinancialCalendarPage() {
   const [selectedEventType, setSelectedEventType] = useState<"all" | CalendarEventType>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [categories, setCategories] = useState<Category[]>([]);
-  const [accounts, setAccounts] = useState<Account[]>([]);
-
   // Selected Event Dialog
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
   // Raw Events State
   const [events, setEvents] = useState<CalendarEvent[]>([]);
 
-  const loadData = () => {
+  const loadData = useCallback(() => {
     const prof = fyzaStore.getProfile();
     setProfile(prof);
     setCategories(fyzaStore.getCategories());
-    setAccounts(fyzaStore.getAccounts());
 
     const evts = fyzaStore.getCalendarEvents({
       year: currentYear,
@@ -94,7 +79,7 @@ export default function FinancialCalendarPage() {
       categoryId: selectedCategory === "all" ? undefined : selectedCategory,
     });
     setEvents(evts);
-  };
+  }, [currentYear, currentMonth, selectedEventType, selectedCategory]);
 
   useEffect(() => {
     setMounted(true);
@@ -111,7 +96,7 @@ export default function FinancialCalendarPage() {
       window.addEventListener("fyza_store_updated", handleUpdate);
       return () => window.removeEventListener("fyza_store_updated", handleUpdate);
     }
-  }, [mounted, currentYear, currentMonth, selectedEventType, selectedCategory]);
+  }, [mounted, loadData]);
 
   // Calendar Navigation
   const handlePrevMonth = () => {
@@ -568,6 +553,8 @@ export default function FinancialCalendarPage() {
                   } ${
                     cell.isToday
                       ? "ring-1 ring-inset ring-primary bg-primary/5"
+                      : isOverdueAny
+                      ? "ring-1 ring-inset ring-rose-500/30"
                       : ""
                   }`}
                 >
@@ -599,11 +586,13 @@ export default function FinancialCalendarPage() {
                       const isGoal = evt.type === "goal_deadline";
                       const isTx = evt.type === "completed_transaction";
 
-                      let badgeColor = "bg-secondary/15 text-secondary border-secondary/30";
+                      let badgeColor = isSub
+                        ? "bg-cyan-500/15 text-cyan-300 border-cyan-500/30"
+                        : "bg-secondary/15 text-secondary border-secondary/30";
                       if (evt.isOverdue) badgeColor = "bg-rose-500/20 text-rose-300 border-rose-500/40";
                       else if (isInc) badgeColor = "bg-emerald-500/15 text-emerald-300 border-emerald-500/30";
                       else if (isGoal) badgeColor = "bg-amber-500/15 text-amber-300 border-amber-500/30";
-                      else if (isTx) badgeColor = "bg-cyan-500/15 text-cyan-300 border-cyan-500/30";
+                      else if (isTx) badgeColor = "bg-primary/15 text-primary border-primary/30";
 
                       return (
                         <button

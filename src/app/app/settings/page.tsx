@@ -4,23 +4,18 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   User,
-  Settings,
   Bell,
   Download,
   Upload,
   RefreshCw,
-  Trash2,
   ShieldAlert,
-  Moon,
-  Sun,
-  Laptop,
-  CheckCircle2,
   Palette,
   Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -39,8 +34,7 @@ import {
 import { useTheme } from "next-themes";
 import { useAuth } from "@/components/providers/auth-provider";
 import { fyzaStore } from "@/lib/store";
-import { CURRENCIES, FYZA_THEMES, type FyzaTheme } from "@/lib/constants";
-import type { Profile, UserPreferences } from "@/lib/types";
+import { CURRENCIES, FYZA_THEMES } from "@/lib/constants";
 import { toast } from "sonner";
 
 export default function SettingsPage() {
@@ -418,6 +412,11 @@ export default function SettingsPage() {
               className="text-xs flex items-center gap-1.5 text-amber-400 border-amber-500/30 hover:bg-amber-500/10"
             >
               <RefreshCw className="h-3.5 w-3.5" /> Reset Demo Data
+              {isDemoMode && (
+                <Badge variant="outline" className="ml-1 text-[9px] py-0 px-1 text-amber-400 border-amber-500/40">
+                  Active Demo
+                </Badge>
+              )}
             </Button>
           </div>
         </CardContent>

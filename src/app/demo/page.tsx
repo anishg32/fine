@@ -1,44 +1,24 @@
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
-  ArrowLeft,
-  ArrowRight,
   Shield,
-  Zap,
-  TrendingUp,
   PieChart,
   Target,
   Bot,
-  Lock,
-  CheckCircle2,
-  ChevronDown,
   Sparkles,
   BarChart3,
-  Wallet,
-  Globe,
-  CreditCard,
   Calendar,
-  Check,
-  ChevronRight,
   Activity,
   ArrowUpRight,
   ArrowDownRight,
-  Sliders,
-  DollarSign,
-  Play,
   RotateCcw,
-  Layers,
   Search,
-  Filter,
   Trash2,
   Edit2,
   Plus,
-  AlertTriangle,
-  Info,
   CalendarClock,
   ExternalLink,
 } from "lucide-react";
@@ -59,8 +39,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { Card } from "@/components/ui/card";
 import { useAuth } from "@/components/providers/auth-provider";
 import { ThemeSelector } from "@/components/layout/theme-selector";
 import { fyzaStore } from "@/lib/store";
@@ -82,7 +61,6 @@ import { toast } from "sonner";
 export default function InteractiveDemoPage() {
   const router = useRouter();
   const { startDemoSession } = useAuth();
-  const prefersReducedMotion = useReducedMotion();
 
   // Active Playground Tab
   const [activeTab, setActiveTab] = useState<"dashboard" | "transactions" | "budgets" | "goals" | "ai">("dashboard");
@@ -865,6 +843,21 @@ export default function InteractiveDemoPage() {
                   </SelectContent>
                 </Select>
 
+                {/* Category Filter */}
+                <Select value={txCatFilter} onValueChange={setTxCatFilter}>
+                  <SelectTrigger className="w-36 h-9 text-xs bg-surface border-border">
+                    <SelectValue placeholder="All Categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    {categories.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
                 {/* Sort By */}
                 <Select value={txSortBy} onValueChange={(v) => setTxSortBy(v as "date_desc" | "date_asc" | "amount_desc" | "amount_asc")}>
                   <SelectTrigger className="w-36 h-9 text-xs bg-surface border-border">
@@ -1178,10 +1171,21 @@ export default function InteractiveDemoPage() {
                           className="w-full accent-primary cursor-pointer"
                         />
                       </div>
+
+                      {/* Target Date Adjuster */}
+                      <div className="flex items-center justify-between text-[11px] pt-1 border-t border-border/40">
+                        <span className="text-muted-foreground">Target Date:</span>
+                        <input
+                          type="date"
+                          value={goal.target_date || ""}
+                          onChange={(e) => handleUpdateGoalDate(goal, e.target.value)}
+                          className="bg-surface border border-border rounded px-2 py-0.5 text-[11px] font-mono text-foreground cursor-pointer"
+                        />
+                      </div>
                     </div>
 
-                    {/* Quick Contribution Buttons */}
-                    <div className="pt-3 border-t border-border flex items-center gap-2">
+                    {/* Quick & Custom Contribution Buttons */}
+                    <div className="pt-3 border-t border-border flex items-center gap-1.5">
                       <Button
                         size="sm"
                         onClick={() => {
@@ -1190,7 +1194,7 @@ export default function InteractiveDemoPage() {
                         }}
                         className="flex-1 h-8 text-[11px] font-bold bg-primary text-black hover:bg-primary/90"
                       >
-                        + ₹5,000
+                        + ₹5k
                       </Button>
                       <Button
                         size="sm"
@@ -1200,13 +1204,88 @@ export default function InteractiveDemoPage() {
                         }}
                         className="flex-1 h-8 text-[11px] font-bold bg-surface border border-border hover:bg-surface-elevated text-foreground"
                       >
-                        + ₹10,000
+                        + ₹10k
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setContributingGoal(goal);
+                          setContributionAmount("5000");
+                        }}
+                        className="h-8 px-2.5 text-[11px] font-semibold border-border text-foreground hover:bg-surface"
+                      >
+                        + Custom
                       </Button>
                     </div>
                   </Card>
                 );
               })}
             </div>
+
+            {/* Custom Goal Contribution Dialog */}
+            <Dialog open={contributingGoal !== null} onOpenChange={(open) => !open && setContributingGoal(null)}>
+              <DialogContent className="max-w-md bg-card border-border">
+                <DialogHeader>
+                  <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
+                    <Target className="h-4 w-4 text-primary" />
+                    Contribute to {contributingGoal?.name}
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-2">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-foreground">Contribution Amount (₹)</label>
+                    <Input
+                      type="number"
+                      min="100"
+                      step="500"
+                      value={contributionAmount}
+                      onChange={(e) => setContributionAmount(e.target.value)}
+                      placeholder="Enter deposit amount"
+                      className="text-xs bg-surface"
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    {["2500", "5000", "10000", "25000"].map((preset) => (
+                      <Button
+                        key={preset}
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setContributionAmount(preset)}
+                        className="text-[10px] h-7 flex-1"
+                      >
+                        ₹{Number(preset).toLocaleString()}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+                <DialogFooter className="flex gap-2 justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setContributingGoal(null)}
+                    className="text-xs"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      const amt = parseFloat(contributionAmount);
+                      if (isNaN(amt) || amt <= 0) {
+                        toast.error("Please enter a valid contribution amount.");
+                        return;
+                      }
+                      handleRecordContribution(amt);
+                    }}
+                    className="bg-primary text-black font-semibold hover:bg-primary/90 text-xs"
+                  >
+                    Deposit ₹{Number(contributionAmount || 0).toLocaleString()}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         )}
 

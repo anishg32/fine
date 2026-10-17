@@ -2,24 +2,11 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import {
-  BarChart3,
-  TrendingUp,
-  TrendingDown,
-  PieChart,
-  Calendar,
   Download,
   Info,
-  DollarSign,
-  ArrowRight,
-  ShieldCheck,
-  AlertTriangle,
   Lightbulb,
   Sparkles,
-  CheckCircle2,
-  Filter,
-  Zap,
   Activity,
-  Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,7 +28,6 @@ import {
   calculateSpendingByCategory,
   calculateFinancialHealthScore,
   generateSmartSpendingInsights,
-  type SmartInsight,
 } from "@/lib/calculations";
 import { formatCurrency } from "@/lib/utils";
 import type { Transaction, Category, Budget, RecurringTransaction, Account } from "@/lib/types";

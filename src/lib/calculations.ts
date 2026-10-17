@@ -8,7 +8,6 @@ import type {
   Account,
   Transaction,
   Budget,
-  BudgetCategory,
   Goal,
   RecurringTransaction,
   RecurringFrequency,

@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import {
   Wallet,
   TrendingUp,
@@ -11,17 +10,12 @@ import {
   ArrowUpRight,
   ArrowRight,
   Target,
-  Plus,
   PieChart as PieIcon,
-  Filter,
   MoreVertical,
   Edit2,
   Trash2,
   HelpCircle,
-  AlertTriangle,
-  Calendar,
   Layers,
-  CheckCircle,
 } from "lucide-react";
 import {
   AreaChart,
@@ -71,26 +65,20 @@ import type {
   Transaction,
   Budget,
   Goal,
-  RecurringTransaction,
   Category,
   TransactionType,
 } from "@/lib/types";
 import { toast } from "sonner";
 
 export default function DashboardPage() {
-  const router = useRouter();
   const { profile } = useAuth();
 
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
-  const [recurring, setRecurring] = useState<RecurringTransaction[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
 
-  const [currentMonthPrefix, setCurrentMonthPrefix] = useState("2026-10");
-  const [prevMonthPrefix, setPrevMonthPrefix] = useState("2026-09");
-  const [displayMonthName, setDisplayMonthName] = useState("October 2026");
   const [greeting, setGreeting] = useState("Good day");
   const [mounted, setMounted] = useState(false);
 
@@ -99,6 +87,11 @@ export default function DashboardPage() {
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string | null>(null);
   const [cashFlowRange, setCashFlowRange] = useState<"6m" | "ytd" | "all">("6m");
   const [activeDonutIndex, setActiveDonutIndex] = useState<number | null>(null);
+
+  // Month detection states
+  const [currentMonthPrefix, setCurrentMonthPrefix] = useState("2026-10");
+  const [prevMonthPrefix, setPrevMonthPrefix] = useState("2026-09");
+  const [displayMonthName, setDisplayMonthName] = useState("October 2026");
 
   // Quick Edit Transaction
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
@@ -109,7 +102,6 @@ export default function DashboardPage() {
     setTransactions(fyzaStore.getTransactions());
     setBudgets(fyzaStore.getBudgets());
     setGoals(fyzaStore.getGoals());
-    setRecurring(fyzaStore.getRecurring());
     setCategories(fyzaStore.getCategories());
   };
 
@@ -117,6 +109,31 @@ export default function DashboardPage() {
     setMounted(true);
     loadData();
     setGreeting(getGreeting());
+
+    // Update dynamic month in useEffect after mount to respect Next.js prerender
+    const txs = fyzaStore.getTransactions();
+    let refDate = new Date();
+    if (txs.length > 0) {
+      const sorted = [...txs].sort((a, b) => b.transaction_date.localeCompare(a.transaction_date));
+      const latest = sorted[0].transaction_date;
+      if (latest && latest.length >= 7) {
+        const parts = latest.split("-");
+        refDate = new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
+      }
+    }
+    const y = refDate.getFullYear();
+    const m = refDate.getMonth() + 1;
+    const currPrefix = `${y}-${String(m).padStart(2, "0")}`;
+    const prevM = m === 1 ? 12 : m - 1;
+    const prevY = m === 1 ? y - 1 : y;
+    const prevPrefix = `${prevY}-${String(prevM).padStart(2, "0")}`;
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December",
+    ];
+    setCurrentMonthPrefix(currPrefix);
+    setPrevMonthPrefix(prevPrefix);
+    setDisplayMonthName(`${monthNames[m - 1]} ${y}`);
 
     window.addEventListener("fyza_store_updated", loadData);
     return () => window.removeEventListener("fyza_store_updated", loadData);
@@ -188,37 +205,44 @@ export default function DashboardPage() {
 
   // Cash Flow Historical Chart Data
   const cashFlowChartData = useMemo(() => {
-    const monthKeys = [
-      { key: "2026-05", label: "May 26" },
-      { key: "2026-06", label: "Jun 26" },
-      { key: "2026-07", label: "Jul 26" },
-      { key: "2026-08", label: "Aug 26" },
-      { key: "2026-09", label: "Sep 26" },
-      { key: "2026-10", label: "Oct 26" },
-    ];
+    const monthCount = cashFlowRange === "ytd" ? 10 : cashFlowRange === "all" ? 12 : 6;
+    const parts = currentMonthPrefix.split("-");
+    const baseYear = Number(parts[0]) || 2026;
+    const baseMonth = Number(parts[1]) || 10;
+
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthKeys: Array<{ key: string; label: string }> = [];
+
+    for (let i = monthCount - 1; i >= 0; i--) {
+      let m = baseMonth - i;
+      let y = baseYear;
+      while (m <= 0) {
+        m += 12;
+        y -= 1;
+      }
+      const key = `${y}-${String(m).padStart(2, "0")}`;
+      const shortYear = String(y).slice(-2);
+      const label = `${monthNames[m - 1]} ${shortYear}`;
+      monthKeys.push({ key, label });
+    }
 
     return monthKeys.map(({ key, label }) => {
       const monthTxs = transactions.filter((t) => t.transaction_date.startsWith(key));
       const inc = calculatePeriodIncome(monthTxs);
       const exp = calculatePeriodExpenses(monthTxs);
-      const net = inc - exp;
-
-      // Fallbacks for realistic continuity if earlier months have sparse local data
-      const finalInc = inc > 0 ? inc : 14500000;
-      const finalExp = exp > 0 ? exp : key === "2026-09" ? 5480000 : 5800000;
-      const finalNet = finalInc - finalExp;
+      const net = calculateNetCashFlow(inc, exp);
 
       return {
         month: label,
-        incomeMajor: finalInc / 100,
-        expenseMajor: finalExp / 100,
-        netFlowMajor: finalNet / 100,
-        incomeFormatted: formatCurrency(finalInc, currency),
-        expenseFormatted: formatCurrency(finalExp, currency),
-        netFormatted: formatCurrency(finalNet, currency),
+        incomeMajor: inc / 100,
+        expenseMajor: exp / 100,
+        netFlowMajor: net / 100,
+        incomeFormatted: formatCurrency(inc, currency),
+        expenseFormatted: formatCurrency(exp, currency),
+        netFormatted: formatCurrency(net, currency),
       };
     });
-  }, [transactions, currency]);
+  }, [transactions, currentMonthPrefix, cashFlowRange, currency]);
 
   // Donut Chart Category Data
   const donutData = useMemo(() => {
@@ -415,9 +439,14 @@ export default function DashboardPage() {
                   formatCurrency(currentExpenses, currency)
                 )}
               </div>
-              <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-1.5">
+              <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-1.5 flex-wrap">
                 <span className="font-bold text-foreground">{budgetUtilization.toFixed(0)}%</span>
-                <span>of monthly cap</span>
+                <span>of cap</span>
+                {prevExpenses > 0 && (
+                  <span className={`font-semibold ${currentExpenses <= prevExpenses ? "text-emerald-400" : "text-amber-400"}`}>
+                    • {currentExpenses <= prevExpenses ? "-" : "+"}{Math.abs(((currentExpenses - prevExpenses) / prevExpenses) * 100).toFixed(1)}% vs prev
+                  </span>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -556,18 +585,38 @@ export default function DashboardPage() {
                 Monthly income credits vs operating expenses and net flow
               </CardDescription>
             </div>
-            <div className="flex items-center gap-1.5 text-xs">
-              <div className="flex items-center gap-1.5 mr-2">
-                <span className="h-2 w-2 rounded-full bg-emerald-400" />
-                <span className="text-[11px] text-muted-foreground">Income</span>
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Range Toggle */}
+              <div className="flex items-center p-0.5 rounded-lg bg-surface border border-border text-[11px] font-semibold">
+                {(["6m", "ytd", "all"] as const).map((r) => (
+                  <button
+                    key={r}
+                    onClick={() => setCashFlowRange(r)}
+                    className={`px-2.5 py-1 rounded-md transition-all ${
+                      cashFlowRange === r
+                        ? "bg-primary text-black shadow-sm font-bold"
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {r === "6m" ? "6 Months" : r === "ytd" ? "YTD" : "1 Year"}
+                  </button>
+                ))}
               </div>
-              <div className="flex items-center gap-1.5 mr-2">
-                <span className="h-2 w-2 rounded-full bg-rose-400" />
-                <span className="text-[11px] text-muted-foreground">Expenses</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-cyan-400" />
-                <span className="text-[11px] text-muted-foreground">Net Flow</span>
+
+              {/* Legend */}
+              <div className="flex items-center gap-2 text-xs">
+                <div className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                  <span className="text-[11px] text-muted-foreground">Income</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-rose-400" />
+                  <span className="text-[11px] text-muted-foreground">Expenses</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-cyan-400" />
+                  <span className="text-[11px] text-muted-foreground">Net Flow</span>
+                </div>
               </div>
             </div>
           </CardHeader>
@@ -734,7 +783,7 @@ export default function DashboardPage() {
 
               {/* Donut Legend */}
               <div className="flex-1 w-full space-y-1.5 max-h-52 overflow-y-auto pr-1">
-                {donutData.map((entry, index) => (
+                {donutData.map((entry) => (
                   <button
                     key={entry.name}
                     onClick={() => {

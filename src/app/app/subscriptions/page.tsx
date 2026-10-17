@@ -4,19 +4,11 @@ import React, { useState, useEffect, useMemo } from "react";
 import {
   CreditCard,
   Plus,
-  Calendar,
-  AlertCircle,
   CheckCircle2,
-  Clock,
-  Sparkles,
   Search,
-  Filter,
   Trash2,
   Edit2,
-  Power,
   CalendarClock,
-  DollarSign,
-  ArrowRight,
   ExternalLink,
   Check,
   AlertTriangle,
@@ -24,10 +16,6 @@ import {
   Bell,
   BarChart3,
   Archive,
-  Info,
-  ShieldCheck,
-  TrendingDown,
-  ChevronDown,
   Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -52,7 +40,6 @@ import { fyzaStore } from "@/lib/store";
 import { formatCurrency, toMinorUnits, toMajorUnits } from "@/lib/utils";
 import {
   calculateRecurringMonthlyEquivalent,
-  calculateRecurringAnnualEquivalent,
   calculateSubscriptionAnalytics,
 } from "@/lib/calculations";
 import type {

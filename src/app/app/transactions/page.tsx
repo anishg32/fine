@@ -4,18 +4,11 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Plus,
   Search,
-  Filter,
   Download,
   Upload,
   Trash2,
   Edit2,
-  Calendar,
-  ArrowUpDown,
-  Tag,
-  CreditCard,
-  Building2,
-  X,
-  CheckCircle2,
+  RotateCcw,
   AlertTriangle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,8 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -38,7 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { TransactionDialog } from "@/components/transactions/transaction-dialog";
 import { fyzaStore } from "@/lib/store";
-import { formatCurrency, toMinorUnits, toMajorUnits } from "@/lib/utils";
+import { formatCurrency, toMinorUnits } from "@/lib/utils";
 import type { Transaction, Account, Category, TransactionType } from "@/lib/types";
 import { toast } from "sonner";
 
@@ -63,6 +55,8 @@ export default function TransactionsPage() {
   const [typeFilter, setTypeFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [accountFilter, setAccountFilter] = useState<string>("all");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
   const [sortBy, setSortBy] = useState<"date-desc" | "date-asc" | "amount-desc" | "amount-asc">("date-desc");
 
   const loadData = () => {
@@ -99,6 +93,10 @@ export default function TransactionsPage() {
         // Account
         if (accountFilter !== "all" && tx.account_id !== accountFilter) return false;
 
+        // Date Range
+        if (startDate && tx.transaction_date < startDate) return false;
+        if (endDate && tx.transaction_date > endDate) return false;
+
         return true;
       })
       .sort((a, b) => {
@@ -108,7 +106,7 @@ export default function TransactionsPage() {
         if (sortBy === "amount-asc") return a.amount - b.amount;
         return 0;
       });
-  }, [transactions, searchQuery, typeFilter, categoryFilter, accountFilter, sortBy]);
+  }, [transactions, searchQuery, typeFilter, categoryFilter, accountFilter, startDate, endDate, sortBy]);
 
   // Actions
   const handleEdit = (tx: Transaction) => {
@@ -289,9 +287,9 @@ export default function TransactionsPage() {
       {/* Filter and Search Controls */}
       <Card>
         <CardContent className="p-4 space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
             {/* Search Input */}
-            <div className="relative md:col-span-2">
+            <div className="relative sm:col-span-2">
               <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Search description, merchant, tags..."
@@ -311,6 +309,21 @@ export default function TransactionsPage() {
                 <SelectItem value="expense">Expense</SelectItem>
                 <SelectItem value="income">Income</SelectItem>
                 <SelectItem value="transfer">Transfer</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* Category Filter */}
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="h-9 text-xs">
+                <SelectValue placeholder="All Categories" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -341,6 +354,51 @@ export default function TransactionsPage() {
                 <SelectItem value="amount-asc">Lowest Amount</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Date Range & Reset Row */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-border/50 text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-semibold text-foreground text-[11px]">Date Window:</span>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="h-8 text-xs w-36 bg-surface/60"
+                aria-label="Filter Start Date"
+              />
+              <span className="text-[11px]">to</span>
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="h-8 text-xs w-36 bg-surface/60"
+                aria-label="Filter End Date"
+              />
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="font-mono text-[11px]">
+                Showing {filteredTransactions.length} of {transactions.length} records
+              </span>
+              {(searchQuery || typeFilter !== "all" || categoryFilter !== "all" || accountFilter !== "all" || startDate || endDate) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setTypeFilter("all");
+                    setCategoryFilter("all");
+                    setAccountFilter("all");
+                    setStartDate("");
+                    setEndDate("");
+                  }}
+                  className="h-7 text-[11px] px-2 text-muted-foreground hover:text-foreground flex items-center gap-1"
+                >
+                  <RotateCcw className="h-3 w-3" /> Reset
+                </Button>
+              )}
+            </div>
           </div>
         </CardContent>
       </Card>

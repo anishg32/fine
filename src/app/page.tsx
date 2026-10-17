@@ -1,13 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import {
   ArrowRight,
   Shield,
-  Zap,
   TrendingUp,
   PieChart,
   Target,
@@ -16,26 +15,12 @@ import {
   CheckCircle2,
   ChevronDown,
   Sparkles,
-  BarChart3,
   Wallet,
-  Globe,
   CreditCard,
-  Calendar,
-  Check,
-  ChevronRight,
-  Activity,
-  ArrowUpRight,
-  ArrowDownRight,
-  Sliders,
-  DollarSign,
   Play,
-  RotateCcw,
-  Layers,
   Menu,
   X,
-  FileText,
-  Clock,
-  ExternalLink,
+  Info,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -1032,6 +1017,23 @@ export default function LandingPage() {
                     <span className="h-2 w-2 rounded-full bg-primary inline-block" /> Wealth Growth
                   </span>
                 </div>
+              </div>
+
+              {/* Methodological & Regulatory Assumptions Disclosure */}
+              <div className="p-3 rounded-xl border border-primary/20 bg-primary/5 text-[11px] text-muted-foreground space-y-1.5">
+                <div className="flex items-center gap-1.5 font-semibold text-foreground text-[11px]">
+                  <Info className="h-3.5 w-3.5 text-primary shrink-0" />
+                  <span>Calculation Methodology & Disclaimers</span>
+                </div>
+                <p className="leading-relaxed">
+                  <strong>Contribution Timing:</strong> Assumes recurring deposits made at the beginning of each monthly interval (annuity due formula) compounding monthly over {years} years.
+                </p>
+                <p className="leading-relaxed">
+                  <strong>Hypothetical Returns:</strong> The {expectedReturnRate}% annualized rate is a hypothetical constant return. Nominal gains exclude taxes, inflation, and fee deductions.
+                </p>
+                <p className="leading-relaxed text-[10px] text-muted-foreground/80 italic pt-1 border-t border-border/40">
+                  Disclaimer: Projections are strictly educational and illustrative. Not guaranteed outcomes, registered financial advice, or investment solicitations. Capital is subject to market fluctuation.
+                </p>
               </div>
 
               <Button

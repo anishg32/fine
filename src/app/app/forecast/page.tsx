@@ -1,23 +1,13 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
-  TrendingUp,
   Sliders,
   ShieldAlert,
-  Info,
-  Calendar,
-  Sparkles,
-  ArrowRight,
   CheckCircle2,
   AlertTriangle,
-  Layers,
   Percent,
-  DollarSign,
-  Wallet,
   ShieldCheck,
-  Clock,
-  ArrowDownRight,
   ArrowUpRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -34,11 +24,10 @@ import {
   calculateEmergencyBuffer,
 } from "@/lib/calculations";
 import { formatCurrency } from "@/lib/utils";
-import type { Account, Transaction } from "@/lib/types";
+import type { Account } from "@/lib/types";
 
 export default function ForecastPage() {
   const [accounts, setAccounts] = useState<Account[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [activeTab, setActiveTab] = useState<"simulator" | "runway">("simulator");
 
   // User adjustable assumptions (stored in major currency units for intuitive editing)
@@ -53,11 +42,10 @@ export default function ForecastPage() {
   const [startMonth, setStartMonth] = useState(9); // 0-indexed (October)
   const [hasLoadedStore, setHasLoadedStore] = useState(false);
 
-  const loadData = () => {
+  const loadData = useCallback(() => {
     const accs = fyzaStore.getAccounts();
     const txs = fyzaStore.getTransactions();
     setAccounts(accs);
-    setTransactions(txs);
 
     if (!hasLoadedStore && accs.length > 0) {
       const bal = calculateTotalBalance(accs);
@@ -75,7 +63,7 @@ export default function ForecastPage() {
       }
       setHasLoadedStore(true);
     }
-  };
+  }, [hasLoadedStore]);
 
   useEffect(() => {
     loadData();
@@ -85,7 +73,7 @@ export default function ForecastPage() {
 
     window.addEventListener("fyza_store_updated", loadData);
     return () => window.removeEventListener("fyza_store_updated", loadData);
-  }, [hasLoadedStore]);
+  }, [loadData]);
 
   // Execute What-If Simulation via deterministic calculation engine
   const simulationResult = useMemo(() => {

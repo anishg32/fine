@@ -8,19 +8,13 @@ import {
   Trash2,
   User,
   ShieldCheck,
-  TrendingUp,
-  PieChart,
-  HelpCircle,
   RefreshCw,
-  Info,
   RotateCcw,
-  CheckCircle2,
   Zap,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 import { fyzaStore } from "@/lib/store";
 import {
   calculateTotalBalance,
@@ -33,7 +27,6 @@ import {
 } from "@/lib/calculations";
 import type { AIMessage, RecurringTransaction } from "@/lib/types";
 import { toast } from "sonner";
-import { formatCurrency } from "@/lib/utils";
 
 const PHASE4_SUGGESTED_PROMPTS = [
   "Where did most of my money go this month?",

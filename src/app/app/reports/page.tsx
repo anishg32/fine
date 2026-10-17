@@ -3,11 +3,9 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
   FileText,
-  Download,
   Printer,
   Calendar,
   TrendingUp,
-  TrendingDown,
   Building2,
   PieChart,
   CheckCircle2,
