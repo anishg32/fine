@@ -68,6 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const initDemoUser = useCallback(() => {
+    fyzaStore.setCurrentUser("demo-user", true, "alex@fyza.finance", "Alex Varma");
     fyzaStore.init();
     const demoProf = fyzaStore.getProfile();
     const mockUser: AuthUser = {
@@ -158,6 +159,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Subscribe to Firebase Auth state
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
           if (currentUser) {
+            fyzaStore.setCurrentUser(
+              currentUser.uid,
+              false,
+              currentUser.email,
+              currentUser.displayName
+            );
             const mapped = mapFirebaseUser(currentUser);
             setUser(mapped);
             setCookie("fyza_session", true);
@@ -179,6 +186,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (isDemoActive) {
               initDemoUser();
             } else {
+              fyzaStore.setCurrentUser(null, false, null, null);
               setUser(null);
               setProfile(null);
               setCookie("fyza_session", false);
@@ -219,6 +227,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const res = await signInWithEmailAndPassword(auth, email, password);
+      fyzaStore.setCurrentUser(res.user.uid, false, res.user.email, res.user.displayName);
       const mapped = mapFirebaseUser(res.user);
       setUser(mapped);
       setIsDemoMode(false);
@@ -253,6 +262,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await createUserWithEmailAndPassword(auth, email, password);
       await firebaseUpdateProfile(res.user, { displayName: fullName });
+      fyzaStore.setCurrentUser(res.user.uid, false, res.user.email, fullName);
       const mapped = mapFirebaseUser(res.user);
       setUser(mapped);
       setIsDemoMode(false);
@@ -299,6 +309,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const res = await signInWithPopup(auth, googleProvider);
+      fyzaStore.setCurrentUser(res.user.uid, false, res.user.email, res.user.displayName);
       const mapped = mapFirebaseUser(res.user);
       setUser(mapped);
       setIsDemoMode(false);
@@ -326,6 +337,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error("SignOut error:", err);
       }
     }
+    fyzaStore.setCurrentUser(null, false, null, null);
     setCookie("fyza_session", false);
     setCookie("fyza_demo_session", false);
     if (typeof localStorage !== "undefined") {

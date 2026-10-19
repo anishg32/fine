@@ -259,10 +259,10 @@ export function AppHeader({
               <DropdownMenuLabel className="font-normal px-2 py-2">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-bold text-foreground leading-none">
-                    {profile?.full_name || "Alex Varma"}
+                    {profile?.full_name || user?.displayName || (isDemoMode ? "Alex Varma" : "Account")}
                   </p>
                   <p className="text-xs text-muted-foreground leading-none truncate">
-                    {profile?.email || user?.email || "alex@fyza.finance"}
+                    {profile?.email || user?.email || (isDemoMode ? "alex@fyza.finance" : "")}
                   </p>
                   {isDemoMode && (
                     <div className="inline-flex items-center gap-1 text-[10px] font-bold text-primary mt-1 px-1.5 py-0.5 rounded bg-primary/10 border border-primary/20 w-fit">

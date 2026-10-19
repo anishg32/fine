@@ -3,7 +3,7 @@
 import React, { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Lock, Mail, Sparkles, ArrowRight } from "lucide-react";
+import { ArrowLeft, Lock, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,14 +15,19 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const redirectUrl = searchParams.get("redirect") || "/app";
 
-  const { signIn, signInWithGoogle, startDemoSession } = useAuth();
+  const { signIn, signInWithGoogle } = useAuth();
 
-  const [email, setEmail] = useState("alex@fyza.finance");
-  const [password, setPassword] = useState("FyzaDemo2026!");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
 
   React.useEffect(() => {
+    // Clear any previous demo state so user logs into their original account
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("fyza_demo_mode");
+      document.cookie = "fyza_demo_session=; path=/; max-age=0; SameSite=Lax";
+    }
     const errorParam = searchParams.get("error");
     if (errorParam) {
       toast.error(decodeURIComponent(errorParam));
@@ -62,12 +67,6 @@ function LoginForm() {
     }
   };
 
-  const handleDemoSignIn = () => {
-    startDemoSession();
-    toast.success("Signed in with Interactive Demo Account!");
-    router.push(redirectUrl);
-  };
-
   return (
     <div className="bg-card py-8 px-4 shadow-xl border border-border sm:rounded-2xl sm:px-10">
       {/* Google Sign-In Primary Button */}
@@ -98,27 +97,6 @@ function LoginForm() {
         </svg>
         <span>Continue with Google</span>
       </Button>
-
-      {/* Quick Demo Access banner */}
-      <div className="mt-4 p-4 rounded-xl bg-primary/10 border border-primary/20 flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-4 w-4 text-primary" />
-          <span className="text-xs font-bold text-foreground">Interactive Demo Mode</span>
-        </div>
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          Test transactions, budgets, goals, and financial assistant with sample records without logging in.
-        </p>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={handleDemoSignIn}
-          className="mt-1 w-full border-primary/30 text-primary hover:bg-primary/15 font-semibold text-xs flex items-center justify-center gap-1.5"
-        >
-          <span>Launch Demo Mode</span>
-          <ArrowRight className="h-3.5 w-3.5" />
-        </Button>
-      </div>
 
       <div className="relative my-5">
         <div className="absolute inset-0 flex items-center">

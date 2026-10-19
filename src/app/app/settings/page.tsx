@@ -40,7 +40,7 @@ import { toast } from "sonner";
 export default function SettingsPage() {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
-  const { profile, updateProfile, signOut, isDemoMode } = useAuth();
+  const { profile, user, updateProfile, signOut, isDemoMode } = useAuth();
   const [mounted, setMounted] = useState(false);
 
   // Profile Form
@@ -189,7 +189,7 @@ export default function SettingsPage() {
                 <Input
                   id="email"
                   disabled
-                  value={profile?.email || "alex@fyza.finance"}
+                  value={profile?.email || user?.email || (isDemoMode ? "alex@fyza.finance" : "")}
                   className="bg-surface/50 opacity-75"
                 />
               </div>

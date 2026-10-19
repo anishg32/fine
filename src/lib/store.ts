@@ -776,47 +776,83 @@ export function generateSeedData(): {
 // ============================================================
 
 class FyzaStore {
+  private currentUserId: string | null = null;
+  private isDemo: boolean = false;
+  private currentUserEmail: string | null = null;
+  private currentUserName: string | null = null;
+
   private isBrowser(): boolean {
     return typeof window !== "undefined";
+  }
+
+  public setCurrentUser(
+    userId: string | null,
+    isDemo: boolean = false,
+    email?: string | null,
+    name?: string | null
+  ): void {
+    this.currentUserId = userId;
+    this.isDemo = isDemo;
+    this.currentUserEmail = email || null;
+    this.currentUserName = name || null;
+    this.notifyChange();
+  }
+
+  public getIsDemo(): boolean {
+    return this.isDemo;
+  }
+
+  public getKey(key: string): string {
+    if (this.isDemo) {
+      return `${key}_demo`;
+    }
+    if (this.currentUserId) {
+      return `${key}_user_${this.currentUserId}`;
+    }
+    return key;
   }
 
   // Initialize or fetch storage
   public init(): void {
     if (!this.isBrowser()) return;
 
-    if (!localStorage.getItem(STORAGE_KEYS.ACCOUNTS)) {
-      this.resetToDemo();
+    if (this.isDemo) {
+      if (!localStorage.getItem(this.getKey(STORAGE_KEYS.ACCOUNTS))) {
+        this.resetToDemo();
+      }
     }
   }
 
   public resetToDemo(): void {
     if (!this.isBrowser()) return;
     const seed = generateSeedData();
-    localStorage.setItem(STORAGE_KEYS.ACCOUNTS, JSON.stringify(seed.accounts));
-    localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(seed.categories));
-    localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(seed.transactions));
-    localStorage.setItem(STORAGE_KEYS.BUDGETS, JSON.stringify(seed.budgets));
-    localStorage.setItem(STORAGE_KEYS.GOALS, JSON.stringify(seed.goals));
-    localStorage.setItem(STORAGE_KEYS.RECURRING, JSON.stringify(seed.recurring));
-    localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(seed.notifications));
-    localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(seed.profile));
-    localStorage.setItem(STORAGE_KEYS.PREFERENCES, JSON.stringify(seed.preferences));
-    localStorage.removeItem(STORAGE_KEYS.RECURRING_OCCURRENCES);
-    localStorage.removeItem(STORAGE_KEYS.NOTIFIED_BILLS);
+    localStorage.setItem(this.getKey(STORAGE_KEYS.ACCOUNTS), JSON.stringify(seed.accounts));
+    localStorage.setItem(this.getKey(STORAGE_KEYS.CATEGORIES), JSON.stringify(seed.categories));
+    localStorage.setItem(this.getKey(STORAGE_KEYS.TRANSACTIONS), JSON.stringify(seed.transactions));
+    localStorage.setItem(this.getKey(STORAGE_KEYS.BUDGETS), JSON.stringify(seed.budgets));
+    localStorage.setItem(this.getKey(STORAGE_KEYS.GOALS), JSON.stringify(seed.goals));
+    localStorage.setItem(this.getKey(STORAGE_KEYS.RECURRING), JSON.stringify(seed.recurring));
+    localStorage.setItem(this.getKey(STORAGE_KEYS.NOTIFICATIONS), JSON.stringify(seed.notifications));
+    localStorage.setItem(this.getKey(STORAGE_KEYS.PROFILE), JSON.stringify(seed.profile));
+    localStorage.setItem(this.getKey(STORAGE_KEYS.PREFERENCES), JSON.stringify(seed.preferences));
+    localStorage.removeItem(this.getKey(STORAGE_KEYS.RECURRING_OCCURRENCES));
+    localStorage.removeItem(this.getKey(STORAGE_KEYS.NOTIFIED_BILLS));
     this.notifyChange();
   }
 
   public clearAllData(): void {
     if (!this.isBrowser()) return;
-    localStorage.removeItem(STORAGE_KEYS.ACCOUNTS);
-    localStorage.removeItem(STORAGE_KEYS.CATEGORIES);
-    localStorage.removeItem(STORAGE_KEYS.TRANSACTIONS);
-    localStorage.removeItem(STORAGE_KEYS.BUDGETS);
-    localStorage.removeItem(STORAGE_KEYS.GOALS);
-    localStorage.removeItem(STORAGE_KEYS.RECURRING);
-    localStorage.removeItem(STORAGE_KEYS.RECURRING_OCCURRENCES);
-    localStorage.removeItem(STORAGE_KEYS.NOTIFIED_BILLS);
-    localStorage.removeItem(STORAGE_KEYS.NOTIFICATIONS);
+    localStorage.removeItem(this.getKey(STORAGE_KEYS.ACCOUNTS));
+    localStorage.removeItem(this.getKey(STORAGE_KEYS.CATEGORIES));
+    localStorage.removeItem(this.getKey(STORAGE_KEYS.TRANSACTIONS));
+    localStorage.removeItem(this.getKey(STORAGE_KEYS.BUDGETS));
+    localStorage.removeItem(this.getKey(STORAGE_KEYS.GOALS));
+    localStorage.removeItem(this.getKey(STORAGE_KEYS.RECURRING));
+    localStorage.removeItem(this.getKey(STORAGE_KEYS.RECURRING_OCCURRENCES));
+    localStorage.removeItem(this.getKey(STORAGE_KEYS.NOTIFIED_BILLS));
+    localStorage.removeItem(this.getKey(STORAGE_KEYS.NOTIFICATIONS));
+    localStorage.removeItem(this.getKey(STORAGE_KEYS.PROFILE));
+    localStorage.removeItem(this.getKey(STORAGE_KEYS.PREFERENCES));
     this.notifyChange();
   }
 
@@ -828,9 +864,9 @@ class FyzaStore {
 
   // --- ACCOUNTS ---
   public getAccounts(): Account[] {
-    if (!this.isBrowser()) return generateSeedData().accounts;
-    const raw = localStorage.getItem(STORAGE_KEYS.ACCOUNTS);
-    if (!raw) return generateSeedData().accounts;
+    if (!this.isBrowser()) return this.isDemo ? generateSeedData().accounts : [];
+    const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.ACCOUNTS));
+    if (!raw) return this.isDemo ? generateSeedData().accounts : [];
     try {
       return JSON.parse(raw);
     } catch {
@@ -851,7 +887,7 @@ class FyzaStore {
       } else {
         updated = {
           id: account.id,
-          user_id: "current-user",
+          user_id: this.currentUserId || "current-user",
           currency: account.currency || "INR",
           opening_balance: account.opening_balance || 0,
           current_balance: account.current_balance || account.opening_balance || 0,
@@ -868,7 +904,7 @@ class FyzaStore {
     } else {
       updated = {
         id: `acc-${Date.now()}`,
-        user_id: "current-user",
+        user_id: this.currentUserId || "current-user",
         name: account.name,
         type: account.type,
         currency: account.currency || "INR",
@@ -885,7 +921,7 @@ class FyzaStore {
     }
 
     if (this.isBrowser()) {
-      localStorage.setItem(STORAGE_KEYS.ACCOUNTS, JSON.stringify(list));
+      localStorage.setItem(this.getKey(STORAGE_KEYS.ACCOUNTS), JSON.stringify(list));
       this.notifyChange();
     }
     return updated;
@@ -894,19 +930,39 @@ class FyzaStore {
   public deleteAccount(id: string): void {
     if (!this.isBrowser()) return;
     const list = this.getAccounts().filter((a) => a.id !== id);
-    localStorage.setItem(STORAGE_KEYS.ACCOUNTS, JSON.stringify(list));
+    localStorage.setItem(this.getKey(STORAGE_KEYS.ACCOUNTS), JSON.stringify(list));
     this.notifyChange();
   }
 
   // --- CATEGORIES ---
   public getCategories(): Category[] {
-    if (!this.isBrowser()) return generateSeedData().categories;
-    const raw = localStorage.getItem(STORAGE_KEYS.CATEGORIES);
-    if (!raw) return generateSeedData().categories;
+    const defaultCategories: Category[] = [
+      ...DEFAULT_INCOME_CATEGORIES.map((c, i) => ({
+        ...c,
+        id: `cat-inc-${i + 1}`,
+        user_id: null,
+        created_at: new Date().toISOString(),
+      })),
+      ...DEFAULT_EXPENSE_CATEGORIES.map((c, i) => ({
+        ...c,
+        id: `cat-exp-${i + 1}`,
+        user_id: null,
+        created_at: new Date().toISOString(),
+      })),
+      ...DEFAULT_TRANSFER_CATEGORIES.map((c, i) => ({
+        ...c,
+        id: `cat-trans-${i + 1}`,
+        user_id: null,
+        created_at: new Date().toISOString(),
+      })),
+    ];
+    if (!this.isBrowser()) return defaultCategories;
+    const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.CATEGORIES));
+    if (!raw) return defaultCategories;
     try {
       return JSON.parse(raw);
     } catch {
-      return generateSeedData().categories;
+      return defaultCategories;
     }
   }
 
@@ -920,7 +976,7 @@ class FyzaStore {
       parent_id: null,
       ...category,
       id: category.id || `cat-${Date.now()}`,
-      user_id: "current-user",
+      user_id: this.currentUserId || "current-user",
       name: category.name,
       type: category.type,
       created_at: now,
@@ -934,7 +990,7 @@ class FyzaStore {
     }
 
     if (this.isBrowser()) {
-      localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(list));
+      localStorage.setItem(this.getKey(STORAGE_KEYS.CATEGORIES), JSON.stringify(list));
       this.notifyChange();
     }
     return newCat;
@@ -942,9 +998,9 @@ class FyzaStore {
 
   // --- TRANSACTIONS ---
   public getTransactions(): Transaction[] {
-    if (!this.isBrowser()) return generateSeedData().transactions;
-    const raw = localStorage.getItem(STORAGE_KEYS.TRANSACTIONS);
-    if (!raw) return generateSeedData().transactions;
+    if (!this.isBrowser()) return this.isDemo ? generateSeedData().transactions : [];
+    const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.TRANSACTIONS));
+    if (!raw) return this.isDemo ? generateSeedData().transactions : [];
     try {
       const txs: Transaction[] = JSON.parse(raw);
       const categories = this.getCategories();
@@ -1002,7 +1058,7 @@ class FyzaStore {
       } else {
         updatedTx = {
           id: tx.id,
-          user_id: "current-user",
+          user_id: this.currentUserId || "current-user",
           currency: tx.currency || "INR",
           category_id: tx.category_id || null,
           merchant: tx.merchant || null,
@@ -1020,7 +1076,7 @@ class FyzaStore {
     } else {
       updatedTx = {
         id: `tx-${Date.now()}`,
-        user_id: "current-user",
+        user_id: this.currentUserId || "current-user",
         account_id: tx.account_id,
         type: tx.type,
         amount: Math.round(tx.amount), // ensure integer minor units
@@ -1057,8 +1113,8 @@ class FyzaStore {
     }
 
     if (this.isBrowser()) {
-      localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(transactions));
-      localStorage.setItem(STORAGE_KEYS.ACCOUNTS, JSON.stringify(accounts));
+      localStorage.setItem(this.getKey(STORAGE_KEYS.TRANSACTIONS), JSON.stringify(transactions));
+      localStorage.setItem(this.getKey(STORAGE_KEYS.ACCOUNTS), JSON.stringify(accounts));
       this.notifyChange();
     }
 
@@ -1084,17 +1140,17 @@ class FyzaStore {
         }
       }
       const updated = transactions.filter((t) => t.id !== id);
-      localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(updated));
-      localStorage.setItem(STORAGE_KEYS.ACCOUNTS, JSON.stringify(accounts));
+      localStorage.setItem(this.getKey(STORAGE_KEYS.TRANSACTIONS), JSON.stringify(updated));
+      localStorage.setItem(this.getKey(STORAGE_KEYS.ACCOUNTS), JSON.stringify(accounts));
       this.notifyChange();
     }
   }
 
   // --- BUDGETS ---
   public getBudgets(): Budget[] {
-    if (!this.isBrowser()) return generateSeedData().budgets;
-    const raw = localStorage.getItem(STORAGE_KEYS.BUDGETS);
-    if (!raw) return generateSeedData().budgets;
+    if (!this.isBrowser()) return this.isDemo ? generateSeedData().budgets : [];
+    const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.BUDGETS));
+    if (!raw) return this.isDemo ? generateSeedData().budgets : [];
     try {
       return JSON.parse(raw);
     } catch {
@@ -1115,7 +1171,7 @@ class FyzaStore {
       } else {
         updated = {
           id: budget.id,
-          user_id: "current-user",
+          user_id: this.currentUserId || "current-user",
           is_active: true,
           created_at: now,
           updated_at: now,
@@ -1126,7 +1182,7 @@ class FyzaStore {
     } else {
       updated = {
         id: `bud-${Date.now()}`,
-        user_id: "current-user",
+        user_id: this.currentUserId || "current-user",
         name: budget.name,
         month: budget.month,
         year: budget.year,
@@ -1140,7 +1196,7 @@ class FyzaStore {
     }
 
     if (this.isBrowser()) {
-      localStorage.setItem(STORAGE_KEYS.BUDGETS, JSON.stringify(list));
+      localStorage.setItem(this.getKey(STORAGE_KEYS.BUDGETS), JSON.stringify(list));
       this.notifyChange();
     }
     return updated;
@@ -1156,7 +1212,7 @@ class FyzaStore {
         cat.limit_amount = Math.round(newLimitMinor);
         b.total_limit = b.categories.reduce((acc, curr) => acc + curr.limit_amount, 0);
         b.updated_at = new Date().toISOString();
-        localStorage.setItem(STORAGE_KEYS.BUDGETS, JSON.stringify(budgets));
+        localStorage.setItem(this.getKey(STORAGE_KEYS.BUDGETS), JSON.stringify(budgets));
         this.notifyChange();
       }
     }
@@ -1164,9 +1220,9 @@ class FyzaStore {
 
   // --- GOALS ---
   public getGoals(): Goal[] {
-    if (!this.isBrowser()) return generateSeedData().goals;
-    const raw = localStorage.getItem(STORAGE_KEYS.GOALS);
-    if (!raw) return generateSeedData().goals;
+    if (!this.isBrowser()) return this.isDemo ? generateSeedData().goals : [];
+    const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.GOALS));
+    if (!raw) return this.isDemo ? generateSeedData().goals : [];
     try {
       return JSON.parse(raw);
     } catch {
@@ -1187,7 +1243,7 @@ class FyzaStore {
       } else {
         updated = {
           id: goal.id,
-          user_id: "current-user",
+          user_id: this.currentUserId || "current-user",
           current_amount: goal.current_amount || 0,
           target_date: goal.target_date || null,
           description: goal.description || null,
@@ -1203,7 +1259,7 @@ class FyzaStore {
     } else {
       updated = {
         id: `goal-${Date.now()}`,
-        user_id: "current-user",
+        user_id: this.currentUserId || "current-user",
         name: goal.name,
         target_amount: Math.round(goal.target_amount),
         current_amount: Math.round(goal.current_amount || 0),
@@ -1220,7 +1276,7 @@ class FyzaStore {
     }
 
     if (this.isBrowser()) {
-      localStorage.setItem(STORAGE_KEYS.GOALS, JSON.stringify(list));
+      localStorage.setItem(this.getKey(STORAGE_KEYS.GOALS), JSON.stringify(list));
       this.notifyChange();
     }
     return updated;
@@ -1236,7 +1292,7 @@ class FyzaStore {
         goals[idx].status = "completed";
       }
       goals[idx].updated_at = new Date().toISOString();
-      localStorage.setItem(STORAGE_KEYS.GOALS, JSON.stringify(goals));
+      localStorage.setItem(this.getKey(STORAGE_KEYS.GOALS), JSON.stringify(goals));
       this.notifyChange();
     }
   }
@@ -1244,15 +1300,15 @@ class FyzaStore {
   public deleteGoal(id: string): void {
     if (!this.isBrowser()) return;
     const list = this.getGoals().filter((g) => g.id !== id);
-    localStorage.setItem(STORAGE_KEYS.GOALS, JSON.stringify(list));
+    localStorage.setItem(this.getKey(STORAGE_KEYS.GOALS), JSON.stringify(list));
     this.notifyChange();
   }
 
   // --- RECURRING TRANSACTIONS & SUBSCRIPTIONS ---
   public getRecurring(): RecurringTransaction[] {
-    if (!this.isBrowser()) return generateSeedData().recurring;
-    const raw = localStorage.getItem(STORAGE_KEYS.RECURRING);
-    if (!raw) return generateSeedData().recurring;
+    if (!this.isBrowser()) return this.isDemo ? generateSeedData().recurring : [];
+    const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.RECURRING));
+    if (!raw) return this.isDemo ? generateSeedData().recurring : [];
     try {
       return JSON.parse(raw);
     } catch {
@@ -1266,7 +1322,7 @@ class FyzaStore {
 
   public getRecurringOccurrences(): string[] {
     if (!this.isBrowser()) return [];
-    const raw = localStorage.getItem(STORAGE_KEYS.RECURRING_OCCURRENCES);
+    const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.RECURRING_OCCURRENCES));
     if (!raw) return [];
     try {
       return JSON.parse(raw);
@@ -1277,7 +1333,7 @@ class FyzaStore {
 
   public getNotifiedBillKeys(): string[] {
     if (!this.isBrowser()) return [];
-    const raw = localStorage.getItem(STORAGE_KEYS.NOTIFIED_BILLS);
+    const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.NOTIFIED_BILLS));
     if (!raw) return [];
     try {
       return JSON.parse(raw);
@@ -1294,7 +1350,7 @@ class FyzaStore {
       item.is_active = !item.is_active;
       item.status = item.is_active ? "active" : "paused";
       item.updated_at = new Date().toISOString();
-      localStorage.setItem(STORAGE_KEYS.RECURRING, JSON.stringify(list));
+      localStorage.setItem(this.getKey(STORAGE_KEYS.RECURRING), JSON.stringify(list));
       this.notifyChange();
     }
   }
@@ -1307,7 +1363,7 @@ class FyzaStore {
       item.is_active = false;
       item.status = "paused";
       item.updated_at = new Date().toISOString();
-      localStorage.setItem(STORAGE_KEYS.RECURRING, JSON.stringify(list));
+      localStorage.setItem(this.getKey(STORAGE_KEYS.RECURRING), JSON.stringify(list));
       this.notifyChange();
     }
   }
@@ -1320,7 +1376,7 @@ class FyzaStore {
       item.is_active = true;
       item.status = "active";
       item.updated_at = new Date().toISOString();
-      localStorage.setItem(STORAGE_KEYS.RECURRING, JSON.stringify(list));
+      localStorage.setItem(this.getKey(STORAGE_KEYS.RECURRING), JSON.stringify(list));
       this.notifyChange();
     }
   }
@@ -1333,7 +1389,7 @@ class FyzaStore {
       item.is_active = false;
       item.status = "cancelled";
       item.updated_at = new Date().toISOString();
-      localStorage.setItem(STORAGE_KEYS.RECURRING, JSON.stringify(list));
+      localStorage.setItem(this.getKey(STORAGE_KEYS.RECURRING), JSON.stringify(list));
       this.notifyChange();
     }
   }
@@ -1346,7 +1402,7 @@ class FyzaStore {
       item.is_active = false;
       item.status = "archived";
       item.updated_at = new Date().toISOString();
-      localStorage.setItem(STORAGE_KEYS.RECURRING, JSON.stringify(list));
+      localStorage.setItem(this.getKey(STORAGE_KEYS.RECURRING), JSON.stringify(list));
       this.notifyChange();
     }
   }
@@ -1359,13 +1415,13 @@ class FyzaStore {
     const item: RecurringTransaction = {
       ...data,
       id: `rec-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      user_id: "demo-user",
+      user_id: this.currentUserId || "current-user",
       status: data.status || (data.is_active ? "active" : "paused"),
       created_at: now,
       updated_at: now,
     };
     if (this.isBrowser()) {
-      localStorage.setItem(STORAGE_KEYS.RECURRING, JSON.stringify([item, ...list]));
+      localStorage.setItem(this.getKey(STORAGE_KEYS.RECURRING), JSON.stringify([item, ...list]));
       this.notifyChange();
     }
     return item;
@@ -1383,14 +1439,14 @@ class FyzaStore {
           }
         : r
     );
-    localStorage.setItem(STORAGE_KEYS.RECURRING, JSON.stringify(list));
+    localStorage.setItem(this.getKey(STORAGE_KEYS.RECURRING), JSON.stringify(list));
     this.notifyChange();
   }
 
   public deleteRecurring(id: string): void {
     if (!this.isBrowser()) return;
     const list = this.getRecurring().filter((r) => r.id !== id);
-    localStorage.setItem(STORAGE_KEYS.RECURRING, JSON.stringify(list));
+    localStorage.setItem(this.getKey(STORAGE_KEYS.RECURRING), JSON.stringify(list));
     this.notifyChange();
   }
 
@@ -1442,8 +1498,8 @@ class FyzaStore {
 
     // Save occurrence key to guarantee idempotency across reloads
     occurrences.push(occurrenceKey);
-    localStorage.setItem(STORAGE_KEYS.RECURRING_OCCURRENCES, JSON.stringify(occurrences));
-    localStorage.setItem(STORAGE_KEYS.RECURRING, JSON.stringify(list));
+    localStorage.setItem(this.getKey(STORAGE_KEYS.RECURRING_OCCURRENCES), JSON.stringify(occurrences));
+    localStorage.setItem(this.getKey(STORAGE_KEYS.RECURRING), JSON.stringify(list));
 
     // Send confirmation in-app notification
     this.addNotification({
@@ -1520,7 +1576,7 @@ class FyzaStore {
     });
 
     if (createdNotifs.length > 0) {
-      localStorage.setItem(STORAGE_KEYS.NOTIFIED_BILLS, JSON.stringify(notifiedKeys));
+      localStorage.setItem(this.getKey(STORAGE_KEYS.NOTIFIED_BILLS), JSON.stringify(notifiedKeys));
     }
 
     return createdNotifs;
@@ -1528,9 +1584,9 @@ class FyzaStore {
 
   // --- NOTIFICATIONS ---
   public getNotifications(): Notification[] {
-    if (!this.isBrowser()) return generateSeedData().notifications;
-    const raw = localStorage.getItem(STORAGE_KEYS.NOTIFICATIONS);
-    if (!raw) return generateSeedData().notifications;
+    if (!this.isBrowser()) return this.isDemo ? generateSeedData().notifications : [];
+    const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.NOTIFICATIONS));
+    if (!raw) return this.isDemo ? generateSeedData().notifications : [];
     try {
       return JSON.parse(raw);
     } catch {
@@ -1545,12 +1601,12 @@ class FyzaStore {
     const notif: Notification = {
       ...data,
       id: `notif-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      user_id: "demo-user",
+      user_id: this.currentUserId || "current-user",
       is_read: false,
       created_at: new Date().toISOString(),
     };
     if (this.isBrowser()) {
-      localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify([notif, ...list]));
+      localStorage.setItem(this.getKey(STORAGE_KEYS.NOTIFICATIONS), JSON.stringify([notif, ...list]));
       this.notifyChange();
     }
     return notif;
@@ -1562,7 +1618,7 @@ class FyzaStore {
     const item = list.find((n) => n.id === id);
     if (item) {
       item.is_read = true;
-      localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(list));
+      localStorage.setItem(this.getKey(STORAGE_KEYS.NOTIFICATIONS), JSON.stringify(list));
       this.notifyChange();
     }
   }
@@ -1570,7 +1626,7 @@ class FyzaStore {
   public markAllNotificationsRead(): void {
     if (!this.isBrowser()) return;
     const list = this.getNotifications().map((n) => ({ ...n, is_read: true }));
-    localStorage.setItem(STORAGE_KEYS.NOTIFICATIONS, JSON.stringify(list));
+    localStorage.setItem(this.getKey(STORAGE_KEYS.NOTIFICATIONS), JSON.stringify(list));
     this.notifyChange();
   }
 
@@ -1690,15 +1746,36 @@ class FyzaStore {
     return events;
   }
 
+  private getDefaultProfile(): Profile {
+    if (this.isDemo) {
+      return generateSeedData().profile;
+    }
+    return {
+      id: this.currentUserId || "current-user",
+      email: this.currentUserEmail || "",
+      full_name: this.currentUserName || "User",
+      avatar_url: null,
+      preferred_currency: "INR",
+      locale: "en-IN",
+      timezone: "Asia/Kolkata",
+      week_start: "monday",
+      date_format: "DD/MM/YYYY",
+      onboarding_completed: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+  }
+
   // --- PROFILE & PREFERENCES ---
   public getProfile(): Profile {
-    if (!this.isBrowser()) return generateSeedData().profile;
-    const raw = localStorage.getItem(STORAGE_KEYS.PROFILE);
-    if (!raw) return generateSeedData().profile;
+    const fallback = this.getDefaultProfile();
+    if (!this.isBrowser()) return fallback;
+    const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.PROFILE));
+    if (!raw) return fallback;
     try {
       return JSON.parse(raw);
     } catch {
-      return generateSeedData().profile;
+      return fallback;
     }
   }
 
@@ -1706,20 +1783,21 @@ class FyzaStore {
     const current = this.getProfile();
     const updated = { ...current, ...data, updated_at: new Date().toISOString() };
     if (this.isBrowser()) {
-      localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(updated));
+      localStorage.setItem(this.getKey(STORAGE_KEYS.PROFILE), JSON.stringify(updated));
       this.notifyChange();
     }
     return updated;
   }
 
   public getPreferences(): UserPreferences {
-    if (!this.isBrowser()) return generateSeedData().preferences;
-    const raw = localStorage.getItem(STORAGE_KEYS.PREFERENCES);
-    if (!raw) return generateSeedData().preferences;
+    const fallback = generateSeedData().preferences;
+    if (!this.isBrowser()) return fallback;
+    const raw = localStorage.getItem(this.getKey(STORAGE_KEYS.PREFERENCES));
+    if (!raw) return fallback;
     try {
       return JSON.parse(raw);
     } catch {
-      return generateSeedData().preferences;
+      return fallback;
     }
   }
 
@@ -1727,7 +1805,7 @@ class FyzaStore {
     const current = this.getPreferences();
     const updated = { ...current, ...data, updated_at: new Date().toISOString() };
     if (this.isBrowser()) {
-      localStorage.setItem(STORAGE_KEYS.PREFERENCES, JSON.stringify(updated));
+      localStorage.setItem(this.getKey(STORAGE_KEYS.PREFERENCES), JSON.stringify(updated));
       this.notifyChange();
     }
     return updated;
@@ -1756,12 +1834,12 @@ class FyzaStore {
         return { success: false, error: "Invalid Fyza backup format" };
       }
       if (this.isBrowser()) {
-        if (parsed.accounts) localStorage.setItem(STORAGE_KEYS.ACCOUNTS, JSON.stringify(parsed.accounts));
-        if (parsed.transactions) localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(parsed.transactions));
-        if (parsed.categories) localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(parsed.categories));
-        if (parsed.budgets) localStorage.setItem(STORAGE_KEYS.BUDGETS, JSON.stringify(parsed.budgets));
-        if (parsed.goals) localStorage.setItem(STORAGE_KEYS.GOALS, JSON.stringify(parsed.goals));
-        if (parsed.profile) localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(parsed.profile));
+        if (parsed.accounts) localStorage.setItem(this.getKey(STORAGE_KEYS.ACCOUNTS), JSON.stringify(parsed.accounts));
+        if (parsed.transactions) localStorage.setItem(this.getKey(STORAGE_KEYS.TRANSACTIONS), JSON.stringify(parsed.transactions));
+        if (parsed.categories) localStorage.setItem(this.getKey(STORAGE_KEYS.CATEGORIES), JSON.stringify(parsed.categories));
+        if (parsed.budgets) localStorage.setItem(this.getKey(STORAGE_KEYS.BUDGETS), JSON.stringify(parsed.budgets));
+        if (parsed.goals) localStorage.setItem(this.getKey(STORAGE_KEYS.GOALS), JSON.stringify(parsed.goals));
+        if (parsed.profile) localStorage.setItem(this.getKey(STORAGE_KEYS.PROFILE), JSON.stringify(parsed.profile));
         this.notifyChange();
       }
       return { success: true };

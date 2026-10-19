@@ -32,6 +32,11 @@ service cloud.firestore {
       allow read, write: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid);
     }
 
+    // Recurring occurrences collection
+    match /recurring_occurrences/{occId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid);
+    }
+
     // Budgets collection
     match /budgets/{budgetId} {
       allow read, write: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid);
