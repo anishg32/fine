@@ -182,10 +182,10 @@ ${
     if (apiKey) {
       try {
         const systemPrompt = `You are Fyza AI, an intelligent, empathetic, and precision-driven personal finance assistant powered by OpenAI (${model}).
-You communicate fluently in natural language and provide actionable financial insights grounded strictly in the user's verified financial facts provided below.
+You communicate fluently, naturally, and warmly in conversational English, just like ChatGPT in a modern chatbox.
 Rules:
-1. ALWAYS communicate naturally and conversationally, understanding colloquial and everyday phrasing.
-2. If the user greets you or asks general conversational/budgeting questions, respond warmly and helpfully.
+1. ALWAYS communicate naturally and conversationally.
+2. If the user sends a simple greeting (e.g. 'hi', 'hii', 'hello', 'hey', 'what's up') or makes casual small talk ('how are you'), reply warmly, casually, and concisely like a friendly conversational assistant, and gently ask how you can help them with their money, budgets, or finances today. Keep it short and engaging — do NOT dump a long wall of text or rigid bullets on a simple greeting.
 3. When citing specific balances, income, expenses, or budgets, NEVER invent transactions, accounts, or numbers. Use only the exact numbers provided in the verified facts.
 4. State the time period covered by cited figures (${periodLabel}).
 5. Currency is Indian Rupee (₹).
@@ -234,28 +234,68 @@ ${summaryFacts}`;
     }
 
     // Grounded Natural Language Financial Intelligence Engine
-    const lower = message.toLowerCase();
+    const lower = message.toLowerCase().trim();
     let answer = "";
 
-    // Conversational Intent 1: Greetings & Politeness
+    // Conversational Intent 1: Greetings (e.g., "hi", "hii", "hiii", "hello", "hey", "namaste")
     if (
-      /^(hi|hello|hey|good\s+(morning|afternoon|evening)|namaste|greetings)\b/i.test(lower) ||
+      /^(h+i+|h+e+y+|h+e+l+l*o+|namaste|hola|greetings)\b/i.test(lower) ||
+      /^h+i+[\s!.,?]*$/i.test(lower) ||
       lower === "hi" ||
+      lower === "hii" ||
+      lower === "hiii" ||
       lower === "hello" ||
-      lower.startsWith("how are you")
+      lower === "hey"
     ) {
-      answer = `Hello! 👋 I'm **Fyza AI**, your personal finance assistant.\n\n` +
-        `I monitor your active accounts, recent transactions, budgets, and savings goals in real-time for **${periodLabel}**.\n\n` +
-        (context && context.totalBalanceMinor > 0
-          ? `You currently have **${fmt(context.totalBalanceMinor)}** in total tracked balances, with a **${context.savingsRatePct}%** savings rate this period.\n\n`
-          : `Your ledger is ready for new records. Log accounts or transactions, or ask me any question!\n\n`) +
-        `Here are a few questions you can ask me:\n` +
-        `• *"Where did most of my money go this month?"*\n` +
-        `• *"How much did I spend on food and groceries?"*\n` +
-        `• *"Can I afford a purchase of ₹15,000?"*\n` +
-        `• *"How can I improve my savings rate?"*`;
+      answer = `Hello! 👋 How are you doing today?\n\n` +
+        `I'm your AI personal finance assistant. I'm here to help you track your spending, manage your budgets, see if you can afford a purchase, or answer any questions about your finances for **${periodLabel}**.\n\n` +
+        `How can I help you today?`;
     }
-    // Conversational Intent 2: General Financial Advice & Savings Tips
+    // Conversational Intent 2: Small Talk / "How are you?" / "How's it going?"
+    else if (
+      lower.includes("how are you") ||
+      lower.includes("how r u") ||
+      lower.includes("how are u") ||
+      lower.includes("how's it going") ||
+      lower.includes("how do you do")
+    ) {
+      answer = `I'm doing great, thank you for asking! 😊\n\n` +
+        `I'm ready to help you analyze your spending, check your savings pace, or review your budgets for **${periodLabel}**. What would you like to look at today?`;
+    }
+    // Conversational Intent 3: Gratitude / Thank you
+    else if (
+      /^(thank|thanks|thx|thank you|tysm|appreciate it)\b/i.test(lower) ||
+      lower.includes("thank you") ||
+      lower.includes("thanks")
+    ) {
+      answer = `You're very welcome! 😊 Always happy to help you build financial clarity. Feel free to ask anytime if you want to check a budget, plan a purchase, or review your ledger!`;
+    }
+    // Conversational Intent 4: Acknowledgment (e.g. "ok", "okay", "cool", "great", "got it")
+    else if (/^(ok|okay|cool|great|awesome|got it|nice|sounds good)[\s!.]*$/i.test(lower)) {
+      answer = `Awesome! 👍 Let me know whenever you'd like to inspect your cash flow, run an affordability check, or set up a new savings milestone.`;
+    }
+    // Conversational Intent 5: Good morning / afternoon / evening / night
+    else if (
+      lower.includes("good morning") ||
+      lower.includes("good afternoon") ||
+      lower.includes("good evening") ||
+      lower.includes("good night")
+    ) {
+      const timeGreeting = lower.includes("morning")
+        ? "Good morning! ☀️"
+        : lower.includes("afternoon")
+        ? "Good afternoon! 🌤️"
+        : lower.includes("night")
+        ? "Good night! 🌙"
+        : "Good evening! 🌆";
+      answer = `${timeGreeting} Hope you're having a wonderful day!\n\n` +
+        `How can I help you with your budget, cash flow, or spending for **${periodLabel}** today?`;
+    }
+    // Conversational Intent 6: Farewell / Goodbye
+    else if (/^(bye|goodbye|see you|cya|take care)[\s!.]*$/i.test(lower)) {
+      answer = `Goodbye! 👋 Have a fantastic day ahead, and keep your savings pacing strong. Come back whenever you need a quick financial check-in!`;
+    }
+    // Conversational Intent 7: General Financial Advice & Savings Tips
     else if (
       lower.includes("how to save") ||
       lower.includes("how can i save") ||
@@ -276,16 +316,17 @@ ${summaryFacts}`;
         `4. **Emergency Runway:** Aim for 3–6 months of essential living expenses in liquid high-yield savings before making speculative investments.\n\n` +
         `*Current Status:* Your current savings rate is **${context ? context.savingsRatePct : 0}%**.`;
     }
-    // Conversational Intent 3: Help / Capabilities
+    // Conversational Intent 8: Help / Capabilities / Who are you
     else if (
       lower.includes("what can you do") ||
       lower.includes("help me") ||
       lower.includes("who are you") ||
+      lower.includes("what is fyza") ||
       lower.includes("capabilities") ||
       lower.includes("features")
     ) {
       answer = `### What Fyza AI Can Do For You\n\n` +
-        `I am your 24/7 financial copilot. Powered by natural language and verified ledger arithmetic, I can:\n\n` +
+        `I am your 24/7 personal finance assistant. Powered by natural language and verified ledger arithmetic, I can:\n\n` +
         `• 📊 **Analyze Spending:** Categorize your outflow (e.g. food, shopping, utilities, commute).\n` +
         `• 🎯 **Goal Pacing:** Calculate exactly how much to save monthly to reach savings milestones.\n` +
         `• 💡 **Affordability Simulation:** Check if a planned purchase (e.g. "Can I afford ₹25,000?") is safe.\n` +
