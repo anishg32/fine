@@ -228,7 +228,7 @@ export default function SignupPage() {
               </div>
               <div className="flex items-center gap-2">
                 <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
-                <span>PostgreSQL Row Level Security protected</span>
+                <span>Firebase Cloud Security & Encryption protected</span>
               </div>
             </div>
           </form>

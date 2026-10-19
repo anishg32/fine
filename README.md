@@ -4,10 +4,10 @@
 [![React](https://img.shields.io/badge/React-19.3.0-blue?style=flat&logo=react)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.x-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
 [![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-v4-38B2AC?style=flat&logo=tailwind-css)](https://tailwindcss.com/)
-[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL%20RLS-3ECF8E?style=flat&logo=supabase)](https://supabase.com/)
+[![Firebase](https://img.shields.io/badge/Firebase-Auth%20%26%20Firestore-FFCA28?style=flat&logo=firebase)](https://firebase.google.com/)
 [![License](https://img.shields.io/badge/License-MIT-emerald)](LICENSE)
 
-**Fyza** is a modern, high-precision personal finance and wealth management platform engineered for individuals who demand financial clarity. Built with a signature midnight emerald aesthetic, Fyza combines zero floating-point arithmetic precision, context-grounded AI analytics, interactive cash flow forecasting, subscription tracking, and strict Row Level Security (RLS).
+**Fyza** is a modern, high-precision personal finance and wealth management platform engineered for individuals who demand financial clarity. Built with a signature midnight emerald aesthetic, Fyza combines zero floating-point arithmetic precision, context-grounded AI analytics, interactive cash flow forecasting, subscription tracking, and strict Firebase Security Rules.
 
 ---
 
@@ -18,7 +18,7 @@
 - **Context-Grounded Fyza AI:** Personal financial assistant that calculates insights strictly from verified ledger facts—preventing hallucinations and distinguishing historical records from forward-looking guidance.
 - **Multi-Scenario Cash Flow Forecasting:** 12-month forward-looking projections featuring Conservative, Expected, and Optimistic what-if simulations with configurable discretionary spending trims.
 - **Recurring Expenses & Financial Calendar:** Automated recurring transaction lifecycle tracking, month-end billing boundary safety (leap-year clamping), and interactive monthly/weekly agenda calendars.
-- **Fintech Security Architecture:** Multi-tenant PostgreSQL schema protected by Row Level Security (RLS), API abuse rate limits, prompt-injection defenses, and complete isolation of client ledger state.
+- **Fintech Security Architecture:** Multi-tenant Firestore schema protected by strict Security Rules, API abuse rate limits, prompt-injection defenses, and complete isolation of client ledger state.
 
 ---
 
@@ -29,7 +29,7 @@
 | **Framework** | [Next.js 16.4](https://nextjs.org/) (App Router, Turbopack, Partial Prefetching) |
 | **Frontend UI** | [React 19](https://react.dev/), [Tailwind CSS](https://tailwindcss.com/), Radix UI primitives, Lucide Icons |
 | **Animations & Data Viz** | [Framer Motion](https://www.framer.com/motion/), [Recharts](https://recharts.org/) |
-| **Database & Auth** | [Supabase](https://supabase.com/) PostgreSQL with RLS, `@supabase/ssr` authentication |
+| **Database & Auth** | [Firebase](https://firebase.google.com/) Authentication (Email/Password & Google Popup) & Cloud Firestore |
 | **State Management** | Reactive client-side store with LocalStorage caching & cloud synchronization |
 | **Form & Validations** | [Zod](https://zod.dev/), React Hook Form |
 
@@ -56,10 +56,13 @@ cp .env.local.example .env.local
 ```
 Configure your environment variables in `.env.local`:
 ```ini
-# Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key_here
+# Firebase Configuration
+NEXT_PUBLIC_FIREBASE_API_KEY=your_firebase_api_key_here
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_firebase_app_id
 
 # AI Configuration (Optional: defaults to grounded deterministic fallback engine)
 AI_API_KEY=your_ai_api_key_here
@@ -71,11 +74,11 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 NEXT_PUBLIC_APP_NAME=Fyza
 ```
 
-### 4. Database Migrations
-Apply PostgreSQL database schemas and Row Level Security policies located in `supabase/`:
-1. Execute `supabase/schema.sql` in your Supabase SQL Editor.
-2. Execute `supabase/migrations/20261015_phase3_subscriptions_calendar.sql`.
-3. Execute `supabase/migrations/20261015_phase4_financial_intelligence.sql`.
+### 4. Firestore Security Rules
+Deploy Firestore security rules using the Firebase CLI or copy `firestore.rules` into the Firebase Console:
+```bash
+firebase deploy --only firestore:rules
+```
 
 ### 5. Running Development Server
 ```bash

@@ -112,6 +112,43 @@ assert(
 );
 
 // ====================================================================
+// SECTION 1B: FIREBASE FIRESTORE SECURITY RULES AUDIT
+// ====================================================================
+console.log("\n--- 1B. Firebase Firestore Security Rules Audit ---");
+const firestoreRulesPath = path.resolve(__dirname, "../firestore.rules");
+assert(fs.existsSync(firestoreRulesPath), "firestore.rules file exists at root");
+const firestoreRulesContent = fs.readFileSync(firestoreRulesPath, "utf-8");
+
+const EXPECTED_FIRESTORE_COLLECTIONS = [
+  "profiles",
+  "accounts",
+  "categories",
+  "transactions",
+  "recurring_transactions",
+  "recurring_occurrences",
+  "budgets",
+  "goals",
+  "notifications",
+  "smart_insights",
+  "what_if_simulations",
+];
+
+for (const col of EXPECTED_FIRESTORE_COLLECTIONS) {
+  assert(
+    firestoreRulesContent.includes(`match /${col}/`),
+    `Firestore collection /${col}/ has security rules declared`
+  );
+}
+assert(
+  firestoreRulesContent.includes("request.auth != null"),
+  "Firestore enforces authentication check"
+);
+assert(
+  firestoreRulesContent.includes("resource.data.user_id == request.auth.uid"),
+  "Firestore enforces user_id ownership match"
+);
+
+// ====================================================================
 // SECTION 2: AI ROUTE SECURITY & RATE LIMITING AUDIT
 // ====================================================================
 console.log("\n--- 2. AI Route Security & Rate Limiting Audit ---");

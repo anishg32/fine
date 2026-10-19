@@ -1,7 +1,7 @@
 // ============================================================
 // FYZA APPLICATION STORE & PERSISTENCE LAYER
 // Provides reactive client-side store with LocalStorage caching
-// and Supabase cloud synchronization bridge.
+// and Firebase Cloud Firestore synchronization bridge.
 // All monetary values in minor currency units (paise/cents).
 // ============================================================
 

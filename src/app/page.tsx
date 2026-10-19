@@ -151,7 +151,7 @@ export default function LandingPage() {
     },
     {
       q: "Is my financial data secure?",
-      a: "Absolutely. Fyza employs strict Supabase Row Level Security (RLS) policies where only your authenticated account can ever read or write your data. We never ask for bank login credentials, OTPs, or credit card CVVs. Data is encrypted in transit via TLS 1.3 and at rest with AES-256.",
+      a: "Absolutely. Fyza employs strict Firebase Firestore Security Rules and authentication where only your authenticated account can ever read or write your data. We never ask for bank login credentials, OTPs, or credit card CVVs. Data is encrypted in transit via TLS 1.3 and at rest with AES-256.",
     },
     {
       q: "Can I test Fyza before connecting or creating an account?",

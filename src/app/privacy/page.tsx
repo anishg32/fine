@@ -34,7 +34,7 @@ export default function PrivacyPage() {
           <section className="space-y-2">
             <h2 className="text-lg font-bold text-foreground">2. Data We Collect and Store</h2>
             <ul className="list-disc pl-5 space-y-1">
-              <li><strong>Account Credentials:</strong> Email address and encrypted password hashes managed via Supabase Auth.</li>
+              <li><strong>Account Credentials:</strong> Email address and encrypted authentication tokens managed via Firebase Authentication.</li>
               <li><strong>Financial Ledger Entries:</strong> Manually inputted or CSV-imported account names, balances, transaction records, budget caps, and savings goals.</li>
               <li><strong>User Preferences:</strong> Display currency, locale, dark/light theme, and notification thresholds.</li>
             </ul>
