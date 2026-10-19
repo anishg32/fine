@@ -122,9 +122,11 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const apiKey = process.env.AI_API_KEY;
-    const apiUrl = process.env.AI_API_URL || "https://api.openai.com/v1";
-    const model = process.env.AI_MODEL || "gpt-4o-mini";
+    const userKey = (typeof body.apiKey === "string" ? body.apiKey.trim() : null) || req.headers.get("x-openai-key")?.trim();
+    const rawApiKey = userKey || process.env.AI_API_KEY || process.env.OPENAI_API_KEY;
+    const apiKey = rawApiKey && rawApiKey !== "your_ai_api_key_here" ? rawApiKey : undefined;
+    const apiUrl = (typeof body.apiUrl === "string" ? body.apiUrl.trim() : null) || process.env.AI_API_URL || process.env.OPENAI_BASE_URL || "https://api.openai.com/v1";
+    const model = (typeof body.model === "string" ? body.model.trim() : null) || process.env.AI_MODEL || process.env.OPENAI_MODEL || "gpt-4o-mini";
 
     // Format currency helper for server context
     const fmt = (minor: number) =>
@@ -176,20 +178,30 @@ ${
 `
       : "No detailed financial snapshot provided.";
 
-    // If an external AI API key is configured, invoke the model securely
-    if (apiKey && apiKey !== "your_ai_api_key_here") {
+    // If an external AI API key is configured, invoke ChatGPT securely
+    if (apiKey) {
       try {
-        const systemPrompt = `You are Fyza AI, an intelligent, empathetic, and precision-driven personal finance assistant.
-You provide clear, actionable financial insights grounded strictly in the user's verified financial facts provided below.
+        const systemPrompt = `You are Fyza AI, an intelligent, empathetic, and precision-driven personal finance assistant powered by OpenAI (${model}).
+You communicate fluently in natural language and provide actionable financial insights grounded strictly in the user's verified financial facts provided below.
 Rules:
-1. NEVER invent transactions, accounts, or balances. Use only the exact numbers provided in the verified facts.
-2. Clearly distinguish recorded facts from forward-looking recommendations.
-3. State the time period covered by all cited figures (${periodLabel}).
-4. Do NOT give guaranteed investment predictions or professional legal/tax advice.
+1. ALWAYS communicate naturally and conversationally, understanding colloquial and everyday phrasing.
+2. If the user greets you or asks general conversational/budgeting questions, respond warmly and helpfully.
+3. When citing specific balances, income, expenses, or budgets, NEVER invent transactions, accounts, or numbers. Use only the exact numbers provided in the verified facts.
+4. State the time period covered by cited figures (${periodLabel}).
 5. Currency is Indian Rupee (₹).
+6. Do NOT give guaranteed investment predictions or professional legal/tax advice.
 
 VERIFIED USER FINANCIAL SNAPSHOT:
 ${summaryFacts}`;
+
+        const incomingHistory = Array.isArray(body.messages) ? body.messages : [];
+        const formattedHistory = incomingHistory
+          .slice(-6)
+          .filter((m) => m && typeof m.content === "string")
+          .map((m) => ({
+            role: m.role === "assistant" ? ("assistant" as const) : ("user" as const),
+            content: String(m.content).slice(0, 500),
+          }));
 
         const response = await fetch(`${apiUrl}/chat/completions`, {
           method: "POST",
@@ -201,9 +213,10 @@ ${summaryFacts}`;
             model,
             messages: [
               { role: "system", content: systemPrompt },
-              { role: "user", content: message },
+              ...formattedHistory,
+              { role: "user", content: trimmedMessage },
             ],
-            temperature: 0.2,
+            temperature: 0.3,
             max_tokens: 650,
           }),
         });
@@ -220,12 +233,68 @@ ${summaryFacts}`;
       }
     }
 
-    // Grounded Deterministic Financial Intelligence Engine (Phase 4 Full Fallback)
+    // Grounded Natural Language Financial Intelligence Engine
     const lower = message.toLowerCase();
     let answer = "";
 
-    // Question 1: Where did most of my money go this month?
+    // Conversational Intent 1: Greetings & Politeness
     if (
+      /^(hi|hello|hey|good\s+(morning|afternoon|evening)|namaste|greetings)\b/i.test(lower) ||
+      lower === "hi" ||
+      lower === "hello" ||
+      lower.startsWith("how are you")
+    ) {
+      answer = `Hello! 👋 I'm **Fyza AI**, your personal finance assistant.\n\n` +
+        `I monitor your active accounts, recent transactions, budgets, and savings goals in real-time for **${periodLabel}**.\n\n` +
+        (context && context.totalBalanceMinor > 0
+          ? `You currently have **${fmt(context.totalBalanceMinor)}** in total tracked balances, with a **${context.savingsRatePct}%** savings rate this period.\n\n`
+          : `Your ledger is ready for new records. Log accounts or transactions, or ask me any question!\n\n`) +
+        `Here are a few questions you can ask me:\n` +
+        `• *"Where did most of my money go this month?"*\n` +
+        `• *"How much did I spend on food and groceries?"*\n` +
+        `• *"Can I afford a purchase of ₹15,000?"*\n` +
+        `• *"How can I improve my savings rate?"*`;
+    }
+    // Conversational Intent 2: General Financial Advice & Savings Tips
+    else if (
+      lower.includes("how to save") ||
+      lower.includes("how can i save") ||
+      lower.includes("tips to save") ||
+      lower.includes("save money") ||
+      lower.includes("financial advice") ||
+      lower.includes("improve savings")
+    ) {
+      const topCat = context?.spendingByCategory?.[0];
+      answer = `### Personalized Savings Recommendations (${periodLabel})\n\n` +
+        `Based on verified financial principles and your current ledger:\n\n` +
+        `1. **The 50/30/20 Rule:** Allocate 50% of income to Needs, 30% to Wants, and 20% to Savings & Investments.\n` +
+        `2. **Target Discretionary Spend:** ` +
+        (topCat
+          ? `Your largest outflow is **${topCat.category}** (${fmt(topCat.amountMinor)}). Trimming 15% here frees **${fmt(Math.round(topCat.amountMinor * 0.15))}/month**.\n`
+          : `Track every purchase to identify invisible subscription leaks and dining spikes.\n`) +
+        `3. **Pay Yourself First:** Automate transfers to savings or SIPs immediately upon salary deposit rather than saving what remains at month-end.\n` +
+        `4. **Emergency Runway:** Aim for 3–6 months of essential living expenses in liquid high-yield savings before making speculative investments.\n\n` +
+        `*Current Status:* Your current savings rate is **${context ? context.savingsRatePct : 0}%**.`;
+    }
+    // Conversational Intent 3: Help / Capabilities
+    else if (
+      lower.includes("what can you do") ||
+      lower.includes("help me") ||
+      lower.includes("who are you") ||
+      lower.includes("capabilities") ||
+      lower.includes("features")
+    ) {
+      answer = `### What Fyza AI Can Do For You\n\n` +
+        `I am your 24/7 financial copilot. Powered by natural language and verified ledger arithmetic, I can:\n\n` +
+        `• 📊 **Analyze Spending:** Categorize your outflow (e.g. food, shopping, utilities, commute).\n` +
+        `• 🎯 **Goal Pacing:** Calculate exactly how much to save monthly to reach savings milestones.\n` +
+        `• 💡 **Affordability Simulation:** Check if a planned purchase (e.g. "Can I afford ₹25,000?") is safe.\n` +
+        `• 🛡️ **Emergency Runway:** Compute how many months your liquid reserves can cover.\n` +
+        `• 📅 **Subscription Audits:** Highlight upcoming bills and auto-debits before they hit.\n` +
+        `• 📈 **Trend Comparisons:** Compare your current outflow with previous months.`;
+    }
+    // Question 1: Where did most of my money go this month?
+    else if (
       lower.includes("where") &&
       (lower.includes("go") || lower.includes("spend") || lower.includes("money") || lower.includes("outflow"))
     ) {
@@ -405,11 +474,9 @@ ${summaryFacts}`;
           `**Total Upcoming Outflow:** **${fmt(totalUpcoming)}**.\n\n` +
           `*Liquidity Status:* Your total liquid account balance of ${fmt(context.totalBalanceMinor)} provides a comfortable safety cushion to cover all scheduled debits.`;
       } else {
-        answer = `### Scheduled Recurring Payments\n\n` +
-          `• **Apartment Rent:** ₹32,000.00/mo (Fixed necessity)\n` +
-          `• **Broadband & Fiber:** ₹1,499.00/mo (Due monthly)\n` +
-          `• **Cloud & Streaming Services:** ₹1,850.00/mo\n\n` +
-          `All active commitments are currently covered by your recorded monthly income.`;
+        answer = `### Scheduled Recurring Payments (${periodLabel})\n\n` +
+          `You currently have no active recurring bills or subscriptions scheduled in your ledger.\n\n` +
+          `*Tip:* Head to the **Subscriptions** tab to register monthly commitments like rent, broadband, or SIP investments so I can alert you before they are due.`;
       }
     }
     // Question 9: What is my net worth / total balance?
@@ -521,13 +588,19 @@ ${summaryFacts}`;
     }
     // Fallback General Financial Summary
     else {
+      const bal = context ? fmt(context.totalBalanceMinor) : "₹0.00";
+      const inc = context ? fmt(context.periodIncomeMinor) : "₹0.00";
+      const exp = context ? fmt(context.periodExpensesMinor) : "₹0.00";
+      const net = context ? `${context.netCashFlowMinor >= 0 ? "+" : ""}${fmt(context.netCashFlowMinor)}` : "₹0.00";
+      const sRate = context ? context.savingsRatePct : 0;
+
       answer = `### Fyza Financial Snapshot (${periodLabel})\n\n` +
-        `• **Tracked Liquid Balance:** ${context ? fmt(context.totalBalanceMinor) : "₹4,05,399.00"}\n` +
-        `• **Monthly Income:** ${context ? fmt(context.periodIncomeMinor) : "₹1,45,000.00"}\n` +
-        `• **Monthly Expenses:** ${context ? fmt(context.periodExpensesMinor) : "₹48,849.00"}\n` +
-        `• **Net Cash Flow:** ${context ? fmt(context.netCashFlowMinor) : "+₹96,151.00"} (${context ? context.savingsRatePct : 66.3}% savings rate)\n` +
+        `• **Tracked Liquid Balance:** ${bal}\n` +
+        `• **Monthly Income Inflow:** ${inc}\n` +
+        `• **Monthly Expense Outflow:** ${exp}\n` +
+        `• **Net Cash Flow Surplus:** ${net} (${sRate}% savings rate)\n` +
         (context?.emergencyMonths ? `• **Emergency Cash Runway:** ${context.emergencyMonths} months\n\n` : "\n\n") +
-        `Ask me any of these questions:\n` +
+        `Ask me any of these questions in natural language:\n` +
         `1. *"Where did most of my money go this month?"*\n` +
         `2. *"How much did I spend on food and groceries?"*\n` +
         `3. *"Which budgets are close to their limits?"*\n` +

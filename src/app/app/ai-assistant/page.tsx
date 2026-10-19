@@ -9,10 +9,22 @@ import {
   User,
   RefreshCw,
   RotateCcw,
+  Key,
+  Cpu,
+  CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { fyzaStore } from "@/lib/store";
 import {
   calculateTotalBalance,
@@ -48,7 +60,7 @@ export default function AIAssistantPage() {
       conversation_id: "conv-1",
       role: "assistant",
       content:
-        "Hello! I am your **Fyza financial assistant**.\n\nI have real-time visibility into your accounts, recent transactions, and active budget limits.\n\nSelect any question below or ask me about your spending patterns, emergency runway, or savings milestones!",
+        "Hello! I am your **Fyza personal finance assistant** powered by natural language.\n\nI have real-time visibility into your accounts, recent transactions, and active budget limits.\n\nAsk me any question in plain English or select a suggested topic below to get started!",
       created_at: "2026-10-15T00:00:00.000Z",
       source: "deterministic_engine",
     },
@@ -58,7 +70,23 @@ export default function AIAssistantPage() {
   const [loading, setLoading] = useState(false);
   const [lastQuery, setLastQuery] = useState("");
   const [currentPeriodName, setCurrentPeriodName] = useState("October 2026");
+  const [userApiKey, setUserApiKey] = useState("");
+  const [userModel, setUserModel] = useState("gpt-4o-mini");
+  const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
+  const [tempApiKey, setTempApiKey] = useState("");
+  const [tempModel, setTempModel] = useState("gpt-4o-mini");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedKey = localStorage.getItem("fyza_openai_key") || "";
+      const savedModel = localStorage.getItem("fyza_openai_model") || "gpt-4o-mini";
+      setUserApiKey(savedKey);
+      setUserModel(savedModel);
+      setTempApiKey(savedKey);
+      setTempModel(savedModel);
+    }
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -183,8 +211,17 @@ export default function AIAssistantPage() {
       const context = buildContext();
       const res = await fetch("/api/ai/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: userMsg.content, context }),
+        headers: {
+          "Content-Type": "application/json",
+          ...(userApiKey ? { "x-openai-key": userApiKey } : {}),
+        },
+        body: JSON.stringify({
+          message: userMsg.content,
+          context,
+          apiKey: userApiKey || undefined,
+          model: userModel || "gpt-4o-mini",
+          messages: messages.slice(-6).map((m) => ({ role: m.role, content: m.content })),
+        }),
       });
 
       const data = await res.json();
@@ -200,7 +237,7 @@ export default function AIAssistantPage() {
         };
         setMessages((prev) => [...prev, assistantMsg]);
       } else {
-        toast.error("Failed to receive response from assistant.");
+        toast.error(data.error || "Failed to receive response from assistant.");
       }
     } catch {
       toast.error("Network error while connecting to assistant.");
@@ -221,12 +258,33 @@ export default function AIAssistantPage() {
         id: "msg-welcome-new",
         conversation_id: "conv-1",
         role: "assistant",
-        content: `Conversation reset. I am ready with your verified financial records for **${currentPeriodName}**. Ask me anything!`,
+        content: `Conversation reset. I am ready with your verified financial records for **${currentPeriodName}**. Ask me anything in plain English!`,
         created_at: new Date().toISOString(),
         source: "deterministic_engine",
       },
     ]);
     toast.success("Conversation history cleared.");
+  };
+
+  const handleSaveOpenAIKey = () => {
+    if (typeof window !== "undefined") {
+      const cleanKey = tempApiKey.trim();
+      const cleanModel = tempModel.trim() || "gpt-4o-mini";
+      if (cleanKey) {
+        localStorage.setItem("fyza_openai_key", cleanKey);
+        localStorage.setItem("fyza_openai_model", cleanModel);
+        setUserApiKey(cleanKey);
+        setUserModel(cleanModel);
+        toast.success(`Connected to OpenAI ChatGPT (${cleanModel})!`);
+      } else {
+        localStorage.removeItem("fyza_openai_key");
+        localStorage.removeItem("fyza_openai_model");
+        setUserApiKey("");
+        setUserModel("gpt-4o-mini");
+        toast.info("Cleared OpenAI key. Switched to built-in NLP engine.");
+      }
+    }
+    setIsKeyModalOpen(false);
   };
 
   return (
@@ -238,11 +296,17 @@ export default function AIAssistantPage() {
             <Bot className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+            <h2 className="text-lg font-bold text-foreground flex items-center gap-2 flex-wrap">
               Financial Assistant
-              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" /> Active
-              </span>
+              {userApiKey ? (
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 flex items-center gap-1.5 shadow-sm">
+                  <Cpu className="h-3 w-3" /> ChatGPT ({userModel})
+                </span>
+              ) : (
+                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" /> NLP Engine Active
+                </span>
+              )}
             </h2>
             <p className="text-xs text-muted-foreground">
               Period: <span className="font-semibold text-foreground">{currentPeriodName}</span> • Real-time ledger insights
@@ -251,6 +315,15 @@ export default function AIAssistantPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsKeyModalOpen(true)}
+            className="text-xs flex items-center gap-1.5 h-8 border-primary/30 text-foreground hover:bg-primary/10"
+          >
+            <Key className="h-3 w-3 text-primary" /> {userApiKey ? "ChatGPT Active" : "ChatGPT Key"}
+          </Button>
+
           {lastQuery && (
             <Button
               variant="outline"
@@ -324,7 +397,13 @@ export default function AIAssistantPage() {
 
                 {!isUser && (
                   <div className="flex items-center gap-2 px-1 text-[11px] text-muted-foreground">
-                    <span className="font-medium text-foreground/80">Fyza Assistant</span>
+                    <span className="font-semibold text-foreground/80">
+                      {m.source === "live_ai" ? "OpenAI ChatGPT" : "Fyza Assistant"}
+                    </span>
+                    <span>•</span>
+                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-surface border border-border">
+                      {m.source === "live_ai" ? (userModel || "gpt-4o-mini") : "NLP Engine"}
+                    </span>
                     <span>•</span>
                     <span>{currentPeriodName}</span>
                   </div>
@@ -376,6 +455,99 @@ export default function AIAssistantPage() {
       <p className="text-[11px] text-center text-muted-foreground">
         Financial facts are calculated deterministically. Fyza AI provides budgeting guidance, not individualized professional financial advice.
       </p>
+
+      {/* OpenAI ChatGPT Configuration Modal */}
+      <Dialog open={isKeyModalOpen} onOpenChange={setIsKeyModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base font-bold">
+              <Cpu className="h-5 w-5 text-primary" />
+              ChatGPT / OpenAI Configuration
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Optionally provide your own OpenAI API key to enable live conversational ChatGPT responses tailored to your financial ledger.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="apiKey" className="text-xs text-muted-foreground">
+                OpenAI API Key (sk-...)
+              </Label>
+              <Input
+                id="apiKey"
+                type="password"
+                placeholder="sk-proj-..."
+                value={tempApiKey}
+                onChange={(e) => setTempApiKey(e.target.value)}
+                className="text-xs font-mono"
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Your key is stored only in your local browser and sent securely via server headers.
+              </p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="model" className="text-xs text-muted-foreground">
+                ChatGPT Model
+              </Label>
+              <select
+                id="model"
+                value={tempModel}
+                onChange={(e) => setTempModel(e.target.value)}
+                className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-xs text-foreground focus:outline-none focus:border-primary"
+              >
+                <option value="gpt-4o-mini">gpt-4o-mini (Recommended — fast & precise)</option>
+                <option value="gpt-4o">gpt-4o (Most capable financial reasoning)</option>
+                <option value="gpt-3.5-turbo">gpt-3.5-turbo (Legacy fast model)</option>
+              </select>
+            </div>
+
+            {userApiKey && (
+              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-2 text-xs text-emerald-400">
+                <CheckCircle2 className="h-4 w-4 shrink-0" />
+                <span>ChatGPT is currently connected and active.</span>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="flex sm:justify-between items-center gap-2">
+            {userApiKey && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setTempApiKey("");
+                  handleSaveOpenAIKey();
+                }}
+                className="text-xs text-rose-400 hover:text-rose-300"
+              >
+                Disconnect Key
+              </Button>
+            )}
+            <div className="flex gap-2 ml-auto">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setIsKeyModalOpen(false)}
+                className="text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleSaveOpenAIKey}
+                className="text-xs bg-primary text-black font-semibold hover:bg-primary/90"
+              >
+                Save & Connect
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
