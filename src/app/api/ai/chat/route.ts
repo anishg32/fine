@@ -237,8 +237,38 @@ ${summaryFacts}`;
     const lower = message.toLowerCase().trim();
     let answer = "";
 
-    // Conversational Intent 1: Greetings (e.g., "hi", "hii", "hiii", "hello", "hey", "namaste")
+    // Inspect recent conversation history for context-aware multi-turn replies
+    const incomingHistory = Array.isArray(body.messages) ? body.messages : [];
+    const lastAssistantMessage = [...incomingHistory]
+      .reverse()
+      .find((m) => m && m.role === "assistant" && typeof m.content === "string")
+      ?.content?.toLowerCase() || "";
+    const lastUserMessage = [...incomingHistory]
+      .reverse()
+      .find((m) => m && m.role === "user" && typeof m.content === "string" && m.content !== trimmedMessage)
+      ?.content?.toLowerCase() || "";
+    const contextClues = `${lastAssistantMessage} ${lastUserMessage}`.trim();
+
+    // Conversational Intent 0: Talking Together like ChatGPT / Voice & Dialogue Partner
     if (
+      lower.includes("chatgpt") ||
+      lower.includes("talking together") ||
+      lower.includes("talk together") ||
+      lower.includes("like chatgpt") ||
+      lower.includes("talk to me") ||
+      lower.includes("speak with me")
+    ) {
+      answer = `I would love that! Let's talk together just like ChatGPT. 😊\n\n` +
+        `I'm your personal financial copilot. We can chat back-and-forth about anything — how your money is doing this month, whether you can afford an upcoming expense, setting up savings targets, or simply brainstorming financial habits.\n\n` +
+        `🎙️ **Ways we can talk together:**\n` +
+        `• **Natural Chat:** Just type anything freely, ask follow-up questions, or say *"tell me more"* or *"give me an example"*.\n` +
+        `• **Voice Mode:** You can click the **🎙️ Voice Mode** button at the top to talk with your voice hands-free!\n` +
+        `• **Hear My Voice:** Tap the **Speaker icon (🔊)** on any message to listen to me speak out loud.\n` +
+        `• **Live ChatGPT Power:** You can also connect your OpenAI API key using the **ChatGPT Key** button above for direct GPT-4o reasoning.\n\n` +
+        `What's on your mind right now? How is your budget or spending feeling for **${periodLabel}**?`;
+    }
+    // Conversational Intent 1: Greetings (e.g., "hi", "hii", "hiii", "hello", "hey", "namaste")
+    else if (
       /^(h+i+|h+e+y+|h+e+l+l*o+|namaste|hola|greetings)\b/i.test(lower) ||
       /^h+i+[\s!.,?]*$/i.test(lower) ||
       lower === "hi" ||
@@ -250,6 +280,84 @@ ${summaryFacts}`;
       answer = `Hello! 👋 How are you doing today?\n\n` +
         `I'm your AI personal finance assistant. I'm here to help you track your spending, manage your budgets, see if you can afford a purchase, or answer any questions about your finances for **${periodLabel}**.\n\n` +
         `How can I help you today?`;
+    }
+    // Conversational Intent 1B: Follow-ups ("tell me more", "explain more", "give me an example", "why?", "how does that work?")
+    else if (
+      lower.includes("tell me more") ||
+      lower.includes("explain more") ||
+      lower.includes("give me an example") ||
+      lower.includes("give an example") ||
+      lower.includes("for example") ||
+      lower === "why?" ||
+      lower === "why" ||
+      lower.includes("how does that work") ||
+      lower.includes("elaborate")
+    ) {
+      if (contextClues.includes("debt") || contextClues.includes("avalanche") || contextClues.includes("snowball")) {
+        answer = `### Practical Example: The Avalanche Payoff in Action 🏔️\n\n` +
+          `Let's say you have two debts:\n` +
+          `• **Credit Card:** ₹50,000 balance at 38% annual APR (min payment: ₹2,500/mo)\n` +
+          `• **Personal Loan:** ₹1,50,000 balance at 12% annual APR (min payment: ₹4,000/mo)\n\n` +
+          `**The Avalanche Playbook:**\n` +
+          `1. You pay the minimum ₹4,000 on the personal loan.\n` +
+          `2. If you have ₹10,000 total available for debt payoff each month, send the remaining **₹6,000** entirely to the Credit Card.\n` +
+          `3. In just ~10 months, that high-interest 38% card is completely wiped out, saving you over ₹14,000 in compound interest penalties!\n` +
+          `4. Then, you roll the entire ₹10,000 onto the personal loan, crushing it years ahead of schedule.`;
+      } else if (lastAssistantMessage.includes("invest") || lastAssistantMessage.includes("compound") || lastAssistantMessage.includes("sip")) {
+        answer = `### Practical Example: The Power of a ₹5,000 Monthly SIP 📈\n\n` +
+          `Suppose you start investing **₹5,000 every month** into a low-cost broad-market index fund (historical average ~12% annualized return):\n\n` +
+          `• **In 5 Years:** You invest ₹3 Lakhs → Portfolio value is **~₹4.1 Lakhs**\n` +
+          `• **In 10 Years:** You invest ₹6 Lakhs → Portfolio value is **~₹11.6 Lakhs** (your money almost doubled!)\n` +
+          `• **In 20 Years:** You invest ₹12 Lakhs → Portfolio value reaches **~₹50.0 Lakhs**!\n\n` +
+          `Notice how out of that ₹50 Lakhs, **₹38 Lakhs is pure compound growth** you never had to work for. That's why starting an automated SIP early is the single most reliable wealth builder.`;
+      } else if (lastAssistantMessage.includes("budget") || lastAssistantMessage.includes("50/30/20") || lastAssistantMessage.includes("save")) {
+        answer = `### Practical Example: Applying the 50/30/20 Rule\n\n` +
+          `Suppose your monthly take-home income is ₹60,000:\n\n` +
+          `1. **50% Needs (₹30,000):** Rent, groceries, utility bills, commute, health insurance.\n` +
+          `2. **30% Wants (₹18,000):** Dining out, entertainment, weekend trips, shopping, subscriptions.\n` +
+          `3. **20% Savings & Debt Payoff (₹12,000):** Automated into liquid emergency fund or index SIPs on payday.\n\n` +
+          `*Pro Tip:* Treat that 20% savings like a non-negotiable bill you owe to your future self — transfer it first before spending on wants!`;
+      } else {
+        answer = `Here is a deeper look at that concept:\n\n` +
+          `In personal finance, small consistent daily habits create far greater wealth than trying to time unpredictable windfalls.\n\n` +
+          `1. **Automate Everything:** When savings, investments, and bill payments happen automatically on salary day, you eliminate decision fatigue.\n` +
+          `2. **Mind the Invisible Leaks:** Recurring ₹299–₹999 subscriptions and frequent ₹400 delivery orders silently drain ₹10,000–₹15,000 every single month.\n` +
+          `3. **Measure Your Net Worth Quarterly:** Track total assets minus total debts once every 3 months to see your long-term upward curve.\n\n` +
+          `Would you like to review how this applies to your current spending for **${periodLabel}**?`;
+      }
+    }
+    // Conversational Intent 1C: "What should I do first?" / "Where do I start?"
+    else if (
+      lower.includes("what should i do first") ||
+      lower.includes("where should i start") ||
+      lower.includes("where do i begin") ||
+      lower.includes("how do i start") ||
+      lower.includes("what is step 1") ||
+      lower.includes("first step")
+    ) {
+      answer = `### The Golden Order of Operations in Personal Finance 🧭\n\n` +
+        `Whenever you're wondering where to start, follow this proven sequential hierarchy:\n\n` +
+        `1. **Step 1: Starter Emergency Buffer (₹25,000–₹50,000)**\n` +
+        `   Keep this in a liquid savings account so a flat tire or doctor visit doesn't force you into credit card debt.\n\n` +
+        `2. **Step 2: Eliminate High-Interest Debt (APR > 10%)**\n` +
+        `   Pay minimums on everything, and attack credit cards or personal loans aggressively.\n\n` +
+        `3. **Step 3: Full 3–6 Month Safety Runway**\n` +
+        `   Save enough liquid reserves to cover rent and essentials if income stops temporarily.\n\n` +
+        `4. **Step 4: Automated Long-Term Investing (SIPs & Goals)**\n` +
+        `   Direct 15–20%+ of your income into index funds, PPF/EPF, and retirement milestones.\n\n` +
+        `Which step are you currently focusing on right now?`;
+    }
+    // Conversational Intent 1D: Affirmation ("yes", "sure", "yeah", "let's do it", "sounds good")
+    else if (
+      /^(yes|yeah|sure|yep|yup|definitely|absolutely|let's do it|sounds good|go ahead|tell me)[\s!.]*$/i.test(lower)
+    ) {
+      answer = `Awesome! Let's do it! 🚀\n\n` +
+        `We can dive into:\n` +
+        `• **Your Spending Breakdown:** See which categories consumed the most money this month.\n` +
+        `• **Purchase Affordability:** Type any amount (e.g. *"Can I afford ₹12,000?"*) and I'll calculate it against your cash surplus.\n` +
+        `• **Budget Check:** See if any category budgets are nearing their limit.\n` +
+        `• **Voice Talk:** Tap the microphone icon below to speak to me directly!\n\n` +
+        `What would you like to explore first?`;
     }
     // Conversational Intent 2: Small Talk / "How are you?" / "How's it going?"
     else if (
@@ -333,6 +441,168 @@ ${summaryFacts}`;
         `• 🛡️ **Emergency Runway:** Compute how many months your liquid reserves can cover.\n` +
         `• 📅 **Subscription Audits:** Highlight upcoming bills and auto-debits before they hit.\n` +
         `• 📈 **Trend Comparisons:** Compare your current outflow with previous months.`;
+    }
+    // Conversational Intent 9: "Can we talk?" / "Let's talk" / "Talk together"
+    else if (
+      lower.includes("talk") ||
+      lower.includes("chat") ||
+      lower.includes("friend") ||
+      lower.includes("listen") ||
+      lower.includes("together")
+    ) {
+      answer = `I'd love to! I'm right here with you. 😊\n\n` +
+        `Think of me as your personal financial copilot. We can talk through anything on your mind — your daily money habits, planning a big dream, dealing with financial stress, or just figuring out where to start with your budget for **${periodLabel}**.\n\n` +
+        `What's on your mind right now? Tell me what you're thinking!`;
+    }
+    // Conversational Intent 10: Debt & Loans (Avalanche vs Snowball)
+    else if (
+      lower.includes("debt") ||
+      lower.includes("loan") ||
+      lower.includes("emi") ||
+      lower.includes("avalanche") ||
+      lower.includes("snowball")
+    ) {
+      answer = `### Tackling Debt: Strategy & Clarity\n\n` +
+        `Handling debt can feel stressful, but having a clear plan changes everything. Here are the two most effective methods:\n\n` +
+        `1. **The Avalanche Method (Mathematically Optimal):** Pay the minimums on all balances, then throw every extra rupee at the debt with the highest interest rate (usually credit cards ~36–42% APR). This saves the most money in interest.\n` +
+        `2. **The Snowball Method (Psychologically Rewarding):** Pay off the smallest balance first regardless of interest rate. Knocking out quick wins builds huge momentum!\n\n` +
+        `*Golden Rule:* Always maintain a mini emergency buffer (₹15,000–₹30,000) so an unexpected expense doesn't force you right back onto credit cards.`;
+    }
+    // Conversational Intent 11: Investing, Mutual Funds, SIP, Stocks
+    else if (
+      lower.includes("invest") ||
+      lower.includes("sip") ||
+      lower.includes("mutual fund") ||
+      lower.includes("stock") ||
+      lower.includes("crypto") ||
+      lower.includes("bitcoin") ||
+      lower.includes("fixed deposit") ||
+      lower.includes("wealth")
+    ) {
+      answer = `### Investing & Wealth Building Essentials\n\n` +
+        `Building long-term wealth comes down to consistency over timing the market:\n\n` +
+        `1. **Start with an Emergency Fund:** Before taking market risk, ensure you have 3–6 months of essential expenses in a safe, liquid account.\n` +
+        `2. **Harness SIPs (Systematic Investment Plans):** Investing a fixed amount monthly into broad-market index mutual funds (like Nifty 50 or S&P 500) eliminates emotional guessing and averages out market volatility.\n` +
+        `3. **The Power of Compounding:** Time in the market beats timing the market. Compounding does its heaviest lifting in years 10, 15, and 20.\n` +
+        `4. **Speculative Assets (Crypto/Individual Stocks):** Keep high-volatility holdings under 5–10% of your total net worth so downswings never jeopardize your baseline.\n\n` +
+        `Would you like to calculate how much you can comfortably invest from your monthly surplus?`;
+    }
+    // Conversational Intent 12: Understanding Inflation
+    else if (lower.includes("inflation") || lower.includes("purchasing power")) {
+      answer = `### What Is Inflation & Why Does It Matter?\n\n` +
+        `Think of inflation as a quiet leak in cash. If inflation is 6% per year, an item that costs ₹100 today will cost ₹106 next year.\n\n` +
+        `• **The Cash Trap:** Leaving all your money in a zero-interest checking account means its real purchasing power shrinks every year.\n` +
+        `• **The Solution:** Keep essential short-term funds in high-yield liquid accounts, and invest long-term capital in assets that historically outpace inflation (like equities and productive businesses).\n\n` +
+        `Staying ahead of inflation is the core reason we invest rather than just save!`;
+    }
+    // Conversational Intent 13: Compound Interest & Rule of 72
+    else if (lower.includes("compound") || lower.includes("rule of 72")) {
+      answer = `### The Magic of Compound Interest ✨\n\n` +
+        `Compound interest is earning returns on your returns. Albert Einstein famously called it the *eighth wonder of the world*.\n\n` +
+        `**The Rule of 72 Shortcut:**\n` +
+        `Divide 72 by your expected annual return rate to see roughly how many years it takes your money to double!\n` +
+        `• At **6% return:** 72 / 6 = **12 years** to double\n` +
+        `• At **12% return:** 72 / 12 = **6 years** to double\n\n` +
+        `The secret ingredient is always **time**. The earlier you start, the more dramatic the curve becomes!`;
+    }
+    // Conversational Intent 14: Credit Cards & Credit Scores (CIBIL)
+    else if (
+      lower.includes("credit card") ||
+      lower.includes("credit score") ||
+      lower.includes("cibil")
+    ) {
+      answer = `### Master Your Credit: Cards & Scores\n\n` +
+        `Credit cards are powerful financial tools when used with discipline:\n\n` +
+        `• **Always Pay 100% In Full:** Never pay just the 'Minimum Amount Due' — credit card interest rates in India average 36–42% annually.\n` +
+        `• **Credit Utilization:** Keep your total monthly card spending below **30%** of your approved credit limit. High utilization lowers your CIBIL score.\n` +
+        `• **On-Time Payments:** Payment track record makes up ~35% of your credit score. Set up autopay for the full statement balance to never miss a due date.\n\n` +
+        `Treat your credit card like a debit card: never swipe for anything you don't already have cash in the bank to cover!`;
+    }
+    // Conversational Intent 15: Financial Stress & Feeling Overwhelmed
+    else if (
+      lower.includes("stress") ||
+      lower.includes("anxious") ||
+      lower.includes("overwhelmed") ||
+      lower.includes("worried") ||
+      lower.includes("scared") ||
+      lower.includes("fear")
+    ) {
+      answer = `Take a deep breath. Money stress is completely normal, but you don't have to tackle everything all at once. 🌱\n\n` +
+        `When money feels overwhelming, here is a grounding way forward:\n` +
+        `1. **Focus on Clarity over Perfection:** Just knowing what comes in and what goes out removes the fear of the unknown.\n` +
+        `2. **One Small Step Today:** Pick just one thing today — like logging one recent transaction, checking a bill due date, or canceling one unused subscription.\n` +
+        `3. **Be Kind to Yourself:** Past spending decisions are data points, not moral failures. Every month is a fresh slate.\n\n` +
+        `I'm here with you every step of the way. What feels like the most pressing thing on your plate right now?`;
+    }
+    // Conversational Intent 16: Impulse Spending & How to Stop
+    else if (
+      lower.includes("impulse") ||
+      lower.includes("stop spending") ||
+      lower.includes("overspend") ||
+      lower.includes("spend too much") ||
+      lower.includes("shopping habit")
+    ) {
+      answer = `### 3 Proven Hacks to Beat Impulse Spending\n\n` +
+        `Impulse spending is almost always driven by emotion, fatigue, or boredom rather than actual need. Here's how to regain control:\n\n` +
+        `1. **The 48-Hour Cooling-Off Rule:** For non-essential purchases over ₹1,000, add them to a wishlist and wait 48 hours. In 80% of cases, the urge passes.\n` +
+        `2. **Calculate in 'Life Energy':** Divide the item's price by your hourly earnings. For example, is a ₹4,000 jacket worth 4 full hours of your working time?\n` +
+        `3. **Add Digital Friction:** Remove saved credit cards from shopping apps (Amazon, food delivery) so you have to manually enter card details each time.\n\n` +
+        `Small frictions create space for conscious, intentional choices!`;
+    }
+    // Conversational Intent 17: Side Hustles & Increasing Income
+    else if (
+      lower.includes("earn more") ||
+      lower.includes("side hustle") ||
+      lower.includes("make money") ||
+      lower.includes("increase income") ||
+      lower.includes("more income")
+    ) {
+      answer = `### Strategies to Expand Your Earning Power 🚀\n\n` +
+        `While you can only cut expenses to zero, your upside earning potential is limitless:\n\n` +
+        `1. **Monetize Your Primary Skill:** Freelancing or consulting in your domain (design, coding, writing, marketing, tutoring) yields the fastest return.\n` +
+        `2. **High-Leverage Upskilling:** Learning in-demand tools (AI workflows, analytics, cloud platforms) can significantly boost your next compensation review.\n` +
+        `3. **Digital Products & Content:** Building once and selling multiple times (templates, guides, micro-courses, newsletters).\n` +
+        `4. **Reinvest in Yourself:** The highest ROI investment you will ever make in your 20s and 30s is in your own skills and network.`;
+    }
+    // Conversational Intent 18: Financial Jokes & Humor
+    else if (
+      lower.includes("joke") ||
+      lower.includes("funny") ||
+      lower.includes("laugh") ||
+      lower.includes("humor")
+    ) {
+      const jokes = [
+        "Why did the dollar bill break up with the coin? Because it needed some space and wanted someone more flexible! 😄",
+        "Why did the accountant look so calm? Because they had everything under audit! 📊",
+        "Why did the credit card go to therapy? Because it had too many unresolved issues with its interest! 💳",
+        "My wallet is like an onion: whenever I open it, it makes me cry! 🧅💸",
+      ];
+      const selectedJoke = jokes[Math.floor(Math.random() * jokes.length)];
+      answer = `${selectedJoke}\n\nMoney is serious business, but a good laugh keeps the journey enjoyable! What would you like to explore next?`;
+    }
+    // Conversational Intent 19: Motivation & Quotes
+    else if (
+      lower.includes("quote") ||
+      lower.includes("motivat") ||
+      lower.includes("inspire") ||
+      lower.includes("wisdom")
+    ) {
+      answer = `Here is a powerful thought on wealth by Morgan Housel (*The Psychology of Money*):\n\n` +
+        `> *"Spending money to show people how much money you have is the fastest way to have less money. True wealth is what you don't see — it's the cars not purchased, the watches not worn, and the freedom to control your own time."*\n\n` +
+        `Every rupee you save today buys you a slice of independence and future options!`;
+    }
+    // Conversational Intent 20: Why Budgeting Matters
+    else if (
+      lower.includes("why budget") ||
+      lower.includes("why is budgeting") ||
+      lower.includes("purpose of budget")
+    ) {
+      answer = `### Why Budgeting Isn't About Deprivation\n\n` +
+        `Many people think budgeting is about saying "no" to everything you love. But in reality, a budget is about:\n\n` +
+        `• **Guilt-Free Spending:** When you know your rent, bills, and savings are funded, you can spend discretionary money with complete peace of mind.\n` +
+        `• **Directing Your Cash:** As John Maxwell said, *"A budget is telling your money where to go instead of wondering where it went."*\n` +
+        `• **Freedom from Surprises:** Annual insurance, car repairs, and festival seasons stop being emergencies when they're planned.\n\n` +
+        `Would you like help setting up a simple category budget for this month?`;
     }
     // Question 1: Where did most of my money go this month?
     else if (
@@ -627,29 +897,15 @@ ${summaryFacts}`;
         `• **Ledger Context:** Covers online retail, electronics, clothing, and discretionary lifestyle purchases.\n\n` +
         `*Guideline:* Keeping discretionary shopping under 15% of net income maintains optimal pacing toward your long-term wealth milestones.`;
     }
-    // Fallback General Financial Summary
+    // Conversational Fallback: Natural dialogue instead of a static table
     else {
-      const bal = context ? fmt(context.totalBalanceMinor) : "₹0.00";
-      const inc = context ? fmt(context.periodIncomeMinor) : "₹0.00";
-      const exp = context ? fmt(context.periodExpensesMinor) : "₹0.00";
-      const net = context ? `${context.netCashFlowMinor >= 0 ? "+" : ""}${fmt(context.netCashFlowMinor)}` : "₹0.00";
-      const sRate = context ? context.savingsRatePct : 0;
-
-      answer = `### Fyza Financial Snapshot (${periodLabel})\n\n` +
-        `• **Tracked Liquid Balance:** ${bal}\n` +
-        `• **Monthly Income Inflow:** ${inc}\n` +
-        `• **Monthly Expense Outflow:** ${exp}\n` +
-        `• **Net Cash Flow Surplus:** ${net} (${sRate}% savings rate)\n` +
-        (context?.emergencyMonths ? `• **Emergency Cash Runway:** ${context.emergencyMonths} months\n\n` : "\n\n") +
-        `Ask me any of these questions in natural language:\n` +
-        `1. *"Where did most of my money go this month?"*\n` +
-        `2. *"How much did I spend on food and groceries?"*\n` +
-        `3. *"Which budgets are close to their limits?"*\n` +
-        `4. *"How has my spending changed compared with last month?"*\n` +
-        `5. *"How much money remains after my recorded expenses?"*\n` +
-        `6. *"How much should I contribute monthly to reach my savings goal?"*\n` +
-        `7. *"What happens if I reduce a selected expense category?"*\n` +
-        `8. *"What recurring payments are coming up?"*`;
+      answer = `I hear you! Let's talk through that. 😊\n\n` +
+        `As your financial companion for **${periodLabel}**, I'm here to think through money decisions, budgeting questions, or financial habits with you.\n\n` +
+        (context && context.totalBalanceMinor > 0
+          ? `Right now, you have **${fmt(context.totalBalanceMinor)}** in total tracked balances with a **${context.savingsRatePct}%** savings rate.\n\n`
+          : "") +
+        `We can discuss anything — like how to manage your expenses, whether you can afford an upcoming purchase, strategies for saving or investing, or tackling financial stress.\n\n` +
+        `What's on your mind, or what specific part would you like to explore together?`;
     }
 
     return NextResponse.json({ reply: answer, source: "deterministic_engine" });

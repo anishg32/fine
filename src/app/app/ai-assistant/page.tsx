@@ -7,11 +7,17 @@ import {
   Sparkles,
   Trash2,
   User,
-  RefreshCw,
   RotateCcw,
   Key,
   Cpu,
   CheckCircle2,
+  Mic,
+  MicOff,
+  Volume2,
+  VolumeX,
+  Copy,
+  Check,
+  Headphones,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,19 +44,29 @@ import {
 import type { AIMessage, RecurringTransaction } from "@/lib/types";
 import { toast } from "sonner";
 
-const PHASE4_SUGGESTED_PROMPTS = [
-  "Where did most of my money go this month?",
-  "How much did I spend on food and groceries?",
-  "Which budgets are close to their limits?",
-  "How has my spending changed compared with last month?",
-  "How much money remains after my recorded expenses?",
-  "How much should I contribute monthly to reach my savings goal?",
-  "What happens if I reduce a selected expense category?",
-  "What recurring payments are coming up?",
+const CONVERSATIONAL_PROMPTS = [
+  "Can we talk about my money?",
+  "Tell me more",
+  "Give me an example",
+  "What should I do first?",
+  "How do I stop impulse spending?",
+  "Where did most of my money go?",
+  "Can I afford a purchase of ₹15,000?",
+  "How can I improve my savings rate?",
+  "Tell me a financial tip",
 ];
 
 interface ChatMessageExtended extends AIMessage {
   source?: "live_ai" | "deterministic_engine";
+}
+
+function cleanTextForSpeech(text: string): string {
+  return text
+    .replace(/[#*_~`]/g, "")
+    .replace(/•/g, "")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+    .replace(/₹(\d+(?:,\d+)*(?:\.\d+)?)/g, "$1 rupees")
+    .trim();
 }
 
 export default function AIAssistantPage() {
@@ -60,7 +76,7 @@ export default function AIAssistantPage() {
       conversation_id: "conv-1",
       role: "assistant",
       content:
-        "Hello! I am your **Fyza personal finance assistant** powered by natural language.\n\nI have real-time visibility into your accounts, recent transactions, and active budget limits.\n\nAsk me any question in plain English or select a suggested topic below to get started!",
+        "Hello! 👋 I'm **Fyza AI**, your personal financial assistant.\n\nI'm right here to talk through your money with you — whether you want to check your spending, see if you can afford an upcoming purchase, plan a budget, or just chat through your goals.\n\nTalk to me naturally just like ChatGPT. What's on your mind today?",
       created_at: "2026-10-15T00:00:00.000Z",
       source: "deterministic_engine",
     },
@@ -75,7 +91,24 @@ export default function AIAssistantPage() {
   const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
   const [tempApiKey, setTempApiKey] = useState("");
   const [tempModel, setTempModel] = useState("gpt-4o-mini");
+
+  // Voice & Talking States
+  const [isListening, setIsListening] = useState(false);
+  const [currentlySpeakingId, setCurrentlySpeakingId] = useState<string | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  // ChatGPT-style Live Voice Mode (Hands-free continuous conversation)
+  const [isVoiceModeOpen, setIsVoiceModeOpen] = useState(false);
+  const [voiceModeStatus, setVoiceModeStatus] = useState<"idle" | "listening" | "thinking" | "speaking">("idle");
+  const [voiceTranscript, setVoiceTranscript] = useState("");
+  const [voiceLastResponse, setVoiceLastResponse] = useState("");
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isVoiceModeOpenRef = useRef(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const inputRecognitionRef = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const voiceModeRecognitionRef = useRef<any>(null);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -104,6 +137,19 @@ export default function AIAssistantPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, loading]);
+
+  // Clean up any ongoing speech synthesis or speech recognition on unmount
+  useEffect(() => {
+    return () => {
+      if (typeof window !== "undefined" && "speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+      try {
+        inputRecognitionRef.current?.abort();
+        voiceModeRecognitionRef.current?.abort();
+      } catch {}
+    };
+  }, []);
 
   const buildContext = () => {
     const accounts = fyzaStore.getAccounts();
@@ -189,9 +235,9 @@ export default function AIAssistantPage() {
     };
   };
 
-  const handleSendMessage = async (textToSend?: string) => {
+  const handleSendMessage = async (textToSend?: string): Promise<string | null> => {
     const query = textToSend || input;
-    if (!query.trim() || loading) return;
+    if (!query.trim() || loading) return null;
 
     setLastQuery(query.trim());
 
@@ -236,11 +282,14 @@ export default function AIAssistantPage() {
           source: data.source || "deterministic_engine",
         };
         setMessages((prev) => [...prev, assistantMsg]);
+        return data.reply;
       } else {
         toast.error(data.error || "Failed to receive response from assistant.");
+        return null;
       }
     } catch {
       toast.error("Network error while connecting to assistant.");
+      return null;
     } finally {
       setLoading(false);
     }
@@ -253,6 +302,7 @@ export default function AIAssistantPage() {
   };
 
   const handleClearHistory = () => {
+    stopSpeaking();
     setMessages([
       {
         id: "msg-welcome-new",
@@ -281,15 +331,237 @@ export default function AIAssistantPage() {
         localStorage.removeItem("fyza_openai_model");
         setUserApiKey("");
         setUserModel("gpt-4o-mini");
-        toast.info("Cleared OpenAI key. Switched to built-in NLP engine.");
+        toast.info("Cleared OpenAI key. Switched to built-in conversational engine.");
       }
     }
     setIsKeyModalOpen(false);
   };
 
+  // Text-to-Speech Engine
+  const speakText = (text: string, messageId?: string, onEnd?: () => void) => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      toast.error("Speech synthesis is not supported in this browser.");
+      onEnd?.();
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    if (messageId && currentlySpeakingId === messageId) {
+      setCurrentlySpeakingId(null);
+      return;
+    }
+
+    const clean = cleanTextForSpeech(text);
+    if (!clean) {
+      onEnd?.();
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(clean);
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+
+    const voices = window.speechSynthesis.getVoices();
+    const englishVoice =
+      voices.find(
+        (v) =>
+          v.lang.startsWith("en") &&
+          (v.name.includes("Natural") ||
+            v.name.includes("Google") ||
+            v.name.includes("Samantha") ||
+            v.name.includes("Daniel") ||
+            v.name.includes("Siri") ||
+            v.name.includes("Karen"))
+      ) || voices.find((v) => v.lang.startsWith("en"));
+
+    if (englishVoice) {
+      utterance.voice = englishVoice;
+    }
+
+    if (messageId) {
+      setCurrentlySpeakingId(messageId);
+    }
+
+    utterance.onend = () => {
+      setCurrentlySpeakingId(null);
+      onEnd?.();
+    };
+
+    utterance.onerror = () => {
+      setCurrentlySpeakingId(null);
+      onEnd?.();
+    };
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const stopSpeaking = () => {
+    if (typeof window !== "undefined" && "speechSynthesis" in window) {
+      window.speechSynthesis.cancel();
+      setCurrentlySpeakingId(null);
+    }
+  };
+
+  const handleCopyMessage = (text: string, id: string) => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedId(id);
+      toast.success("Copied to clipboard!");
+      setTimeout(() => setCopiedId(null), 2000);
+    }
+  };
+
+  // Input Bar Speech Recognition (Dictation)
+  const toggleInputListening = () => {
+    if (typeof window === "undefined") return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      toast.error("Speech recognition is not supported in this browser. Please use Chrome, Safari, or Edge.");
+      return;
+    }
+
+    if (isListening) {
+      inputRecognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = "en-IN";
+      recognition.continuous = false;
+      recognition.interimResults = true;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      recognition.onresult = (event: any) => {
+        let transcript = "";
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          transcript += event.results[i][0].transcript;
+        }
+        if (transcript) {
+          setInput(transcript);
+        }
+      };
+
+      recognition.onerror = () => {
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      inputRecognitionRef.current = recognition;
+      recognition.start();
+    } catch {
+      setIsListening(false);
+    }
+  };
+
+  // ChatGPT-style Live Voice Mode (Continuous hands-free conversation)
+  const openVoiceMode = () => {
+    setIsVoiceModeOpen(true);
+    isVoiceModeOpenRef.current = true;
+    setVoiceTranscript("");
+    setVoiceLastResponse("");
+    stopSpeaking();
+    startVoiceModeListening();
+  };
+
+  const closeVoiceMode = () => {
+    setIsVoiceModeOpen(false);
+    isVoiceModeOpenRef.current = false;
+    stopSpeaking();
+    if (voiceModeRecognitionRef.current) {
+      try {
+        voiceModeRecognitionRef.current.abort();
+      } catch {}
+    }
+    setVoiceModeStatus("idle");
+  };
+
+  const startVoiceModeListening = () => {
+    if (typeof window === "undefined" || !isVoiceModeOpenRef.current) return;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      setVoiceModeStatus("idle");
+      toast.error("Speech recognition requires Chrome, Edge, or Safari.");
+      return;
+    }
+
+    try {
+      const recognition = new SpeechRecognition();
+      recognition.lang = "en-IN";
+      recognition.continuous = false;
+      recognition.interimResults = true;
+
+      let capturedText = "";
+
+      recognition.onstart = () => {
+        if (isVoiceModeOpenRef.current) {
+          setVoiceModeStatus("listening");
+        }
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      recognition.onresult = (event: any) => {
+        let currentTranscript = "";
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          currentTranscript += event.results[i][0].transcript;
+        }
+        if (currentTranscript) {
+          capturedText = currentTranscript;
+          setVoiceTranscript(currentTranscript);
+        }
+      };
+
+      recognition.onerror = () => {
+        if (isVoiceModeOpenRef.current) {
+          setVoiceModeStatus("idle");
+        }
+      };
+
+      recognition.onend = async () => {
+        if (!isVoiceModeOpenRef.current) return;
+
+        if (capturedText.trim()) {
+          setVoiceModeStatus("thinking");
+          const reply = await handleSendMessage(capturedText.trim());
+          if (reply && isVoiceModeOpenRef.current) {
+            setVoiceLastResponse(reply);
+            setVoiceModeStatus("speaking");
+            speakText(reply, undefined, () => {
+              if (isVoiceModeOpenRef.current) {
+                setVoiceTranscript("");
+                startVoiceModeListening();
+              }
+            });
+          } else {
+            setVoiceModeStatus("idle");
+          }
+        } else {
+          setVoiceModeStatus("idle");
+        }
+      };
+
+      voiceModeRecognitionRef.current = recognition;
+      recognition.start();
+    } catch {
+      setVoiceModeStatus("idle");
+    }
+  };
+
   return (
     <div className="flex flex-col h-[calc(100vh-8.5rem)] max-w-4xl mx-auto space-y-3">
-      {/* Header with Verified Facts Banner */}
+      {/* Header with Talking Together & Verified Facts Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-border">
         <div className="flex items-center gap-3">
           <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-sm shrink-0">
@@ -314,7 +586,17 @@ export default function AIAssistantPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {/* ChatGPT-style Live Voice Mode Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={openVoiceMode}
+            className="text-xs flex items-center gap-1.5 h-8 border-emerald-500/40 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 shadow-sm"
+          >
+            <Headphones className="h-3.5 w-3.5" /> Voice Mode (Talk Live)
+          </Button>
+
           <Button
             variant="outline"
             size="sm"
@@ -349,10 +631,10 @@ export default function AIAssistantPage() {
       {/* Suggested Questions Carousel */}
       <div className="space-y-1">
         <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
-          <Sparkles className="h-3 w-3 text-primary" /> Suggested Questions
+          <Sparkles className="h-3 w-3 text-primary" /> Suggested Questions & Follow-ups
         </p>
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-          {PHASE4_SUGGESTED_PROMPTS.map((prompt, idx) => (
+          {CONVERSATIONAL_PROMPTS.map((prompt, idx) => (
             <button
               key={idx}
               onClick={() => handleSendMessage(prompt)}
@@ -396,16 +678,46 @@ export default function AIAssistantPage() {
                 </div>
 
                 {!isUser && (
-                  <div className="flex items-center gap-2 px-1 text-[11px] text-muted-foreground">
-                    <span className="font-semibold text-foreground/80">
-                      {m.source === "live_ai" ? "OpenAI ChatGPT" : "Fyza Assistant"}
-                    </span>
-                    <span>•</span>
-                    <span className="text-[10px] px-1.5 py-0.2 rounded bg-surface border border-border">
-                      {m.source === "live_ai" ? (userModel || "gpt-4o-mini") : "NLP Engine"}
-                    </span>
-                    <span>•</span>
-                    <span>{currentPeriodName}</span>
+                  <div className="flex items-center justify-between gap-2 px-1 text-[11px] text-muted-foreground">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-foreground/80">
+                        {m.source === "live_ai" ? "OpenAI ChatGPT" : "Fyza Assistant"}
+                      </span>
+                      <span>•</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded bg-surface border border-border">
+                        {m.source === "live_ai" ? (userModel || "gpt-4o-mini") : "NLP Engine"}
+                      </span>
+                      <span>•</span>
+                      <span>{currentPeriodName}</span>
+                    </div>
+
+                    {/* Audio Read-out and Copy actions for ChatGPT Talking Together feel */}
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => speakText(m.content, m.id)}
+                        title={currentlySpeakingId === m.id ? "Stop voice" : "Listen aloud"}
+                        className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-surface transition-colors"
+                      >
+                        {currentlySpeakingId === m.id ? (
+                          <VolumeX className="h-3.5 w-3.5 text-rose-400 animate-pulse" />
+                        ) : (
+                          <Volume2 className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleCopyMessage(m.content, m.id)}
+                        title="Copy message"
+                        className="p-1 rounded text-muted-foreground hover:text-foreground hover:bg-surface transition-colors"
+                      >
+                        {copiedId === m.id ? (
+                          <Check className="h-3.5 w-3.5 text-emerald-400" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -415,19 +727,23 @@ export default function AIAssistantPage() {
 
         {loading && (
           <div className="flex items-start gap-3">
-            <div className="h-8 w-8 rounded-lg bg-surface-secondary border border-border flex items-center justify-center text-primary">
+            <div className="h-8 w-8 rounded-lg bg-surface-secondary border border-border flex items-center justify-center text-primary shrink-0 shadow-sm">
               <Bot className="h-4 w-4" />
             </div>
-            <div className="p-3.5 rounded-2xl bg-surface border border-border text-xs text-muted-foreground flex items-center gap-2">
-              <RefreshCw className="h-3.5 w-3.5 animate-spin text-primary" />
-              <span>Analyzing verified ledger records...</span>
+            <div className="p-3.5 rounded-2xl bg-surface border border-border/80 text-xs text-muted-foreground flex items-center gap-2 shadow-sm">
+              <div className="flex gap-1 items-center px-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]" />
+                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]" />
+                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" />
+              </div>
+              <span className="text-foreground/80 font-medium">Fyza is thinking...</span>
             </div>
           </div>
         )}
         <div ref={messagesEndRef} />
       </Card>
 
-      {/* Input Prompt Box */}
+      {/* Input Prompt Box with Voice Microphone & Send */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -436,12 +752,34 @@ export default function AIAssistantPage() {
         className="flex items-center gap-2 pt-1"
       >
         <Input
-          placeholder="Ask Fyza AI anything about your money, budgets, or what-if plans..."
+          placeholder={
+            isListening
+              ? "Listening to your voice... (speak now)"
+              : "Chat with Fyza AI about your money, budgets, or ask anything..."
+          }
           value={input}
           onChange={(e) => setInput(e.target.value)}
           disabled={loading}
-          className="flex-1 text-sm h-11 bg-card border-border shadow-sm focus:border-primary"
+          className={`flex-1 text-sm h-11 bg-card border-border shadow-sm focus:border-primary ${
+            isListening ? "border-rose-500 ring-2 ring-rose-500/20 text-rose-300" : ""
+          }`}
         />
+
+        {/* Speech Dictation Button */}
+        <Button
+          type="button"
+          variant="outline"
+          onClick={toggleInputListening}
+          title={isListening ? "Stop listening" : "Talk to Fyza (Microphone)"}
+          className={`h-11 px-3.5 shrink-0 border-border transition-all ${
+            isListening
+              ? "bg-rose-500/20 border-rose-500 text-rose-400 shadow-md shadow-rose-500/20 animate-pulse"
+              : "hover:bg-surface text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+        </Button>
+
         <Button
           type="submit"
           disabled={loading || !input.trim()}
@@ -455,6 +793,164 @@ export default function AIAssistantPage() {
       <p className="text-[11px] text-center text-muted-foreground">
         Financial facts are calculated deterministically. Fyza AI provides budgeting guidance, not individualized professional financial advice.
       </p>
+
+      {/* ChatGPT-Style Live Voice Mode Dialog */}
+      <Dialog open={isVoiceModeOpen} onOpenChange={(open) => {
+        if (!open) closeVoiceMode();
+      }}>
+        <DialogContent className="sm:max-w-md bg-zinc-950/95 border-zinc-800 text-zinc-100 p-6 backdrop-blur-2xl">
+          <div className="flex flex-col items-center justify-center text-center space-y-6 py-2">
+            {/* Header */}
+            <div className="flex items-center justify-between w-full border-b border-zinc-800/80 pb-3">
+              <div className="flex items-center gap-2">
+                <Headphones className="h-4 w-4 text-emerald-400" />
+                <span className="text-xs font-semibold uppercase tracking-wider text-zinc-300">
+                  Fyza Voice Mode
+                </span>
+              </div>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-400">
+                Talking Together
+              </span>
+            </div>
+
+            {/* Pulsating Voice Orb */}
+            <div className="relative flex items-center justify-center my-4">
+              {voiceModeStatus === "speaking" && (
+                <>
+                  <span className="absolute h-40 w-40 rounded-full bg-cyan-500/10 animate-ping" />
+                  <span className="absolute h-32 w-32 rounded-full bg-primary/20 animate-pulse" />
+                </>
+              )}
+              {voiceModeStatus === "listening" && (
+                <>
+                  <span className="absolute h-40 w-40 rounded-full bg-emerald-500/15 animate-ping" />
+                  <span className="absolute h-32 w-32 rounded-full bg-emerald-500/25 animate-pulse" />
+                </>
+              )}
+              {voiceModeStatus === "thinking" && (
+                <span className="absolute h-32 w-32 rounded-full bg-amber-500/20 animate-spin border-t-2 border-amber-400" />
+              )}
+
+              <button
+                type="button"
+                onClick={() => {
+                  if (voiceModeStatus === "listening") {
+                    voiceModeRecognitionRef.current?.stop();
+                    setVoiceModeStatus("idle");
+                  } else if (voiceModeStatus === "speaking") {
+                    stopSpeaking();
+                    setVoiceModeStatus("idle");
+                  } else {
+                    startVoiceModeListening();
+                  }
+                }}
+                className={`relative h-28 w-28 rounded-full flex flex-col items-center justify-center shadow-2xl transition-all duration-300 cursor-pointer ${
+                  voiceModeStatus === "listening"
+                    ? "bg-gradient-to-tr from-emerald-600 to-teal-400 text-white shadow-emerald-500/30 scale-105"
+                    : voiceModeStatus === "speaking"
+                    ? "bg-gradient-to-tr from-cyan-600 via-primary to-blue-500 text-black shadow-cyan-500/30 scale-105"
+                    : voiceModeStatus === "thinking"
+                    ? "bg-gradient-to-tr from-amber-600 to-yellow-400 text-black shadow-amber-500/20"
+                    : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+                }`}
+              >
+                {voiceModeStatus === "listening" ? (
+                  <Mic className="h-10 w-10 animate-pulse" />
+                ) : voiceModeStatus === "speaking" ? (
+                  <Volume2 className="h-10 w-10 animate-bounce" />
+                ) : voiceModeStatus === "thinking" ? (
+                  <Sparkles className="h-9 w-9 animate-spin" />
+                ) : (
+                  <MicOff className="h-9 w-9 text-zinc-400" />
+                )}
+              </button>
+            </div>
+
+            {/* Status Pill */}
+            <div className="flex items-center gap-2">
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  voiceModeStatus === "listening"
+                    ? "bg-emerald-400 animate-ping"
+                    : voiceModeStatus === "speaking"
+                    ? "bg-cyan-400 animate-pulse"
+                    : voiceModeStatus === "thinking"
+                    ? "bg-amber-400 animate-spin"
+                    : "bg-zinc-500"
+                }`}
+              />
+              <span className="text-xs font-semibold tracking-wide text-zinc-200">
+                {voiceModeStatus === "listening" && "Listening... Speak naturally"}
+                {voiceModeStatus === "speaking" && "Fyza is speaking..."}
+                {voiceModeStatus === "thinking" && "Fyza is thinking..."}
+                {voiceModeStatus === "idle" && "Tap orb or mic to speak"}
+              </span>
+            </div>
+
+            {/* Live Transcript / Dialogue Box */}
+            <div className="w-full max-h-36 overflow-y-auto rounded-xl bg-zinc-900/80 border border-zinc-800/80 p-3.5 text-left space-y-2">
+              {voiceTranscript && (
+                <div className="text-xs text-zinc-300">
+                  <span className="font-semibold text-emerald-400">You: </span>
+                  {voiceTranscript}
+                </div>
+              )}
+              {voiceLastResponse ? (
+                <div className="text-xs text-zinc-300 leading-relaxed whitespace-pre-line">
+                  <span className="font-semibold text-primary">Fyza: </span>
+                  {voiceLastResponse.length > 250
+                    ? `${voiceLastResponse.slice(0, 250)}...`
+                    : voiceLastResponse}
+                </div>
+              ) : (
+                !voiceTranscript && (
+                  <p className="text-[11px] text-zinc-500 italic text-center py-2">
+                    Speak anything naturally — &quot;Can we talk about my money?&quot;, &quot;What should I do first?&quot;, or &quot;How to save?&quot;
+                  </p>
+                )
+              )}
+            </div>
+
+            {/* Controls */}
+            <div className="flex items-center justify-between w-full pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (voiceModeStatus === "listening") {
+                    voiceModeRecognitionRef.current?.stop();
+                    setVoiceModeStatus("idle");
+                  } else {
+                    startVoiceModeListening();
+                  }
+                }}
+                className="text-xs border-zinc-800 text-zinc-300 hover:text-white"
+              >
+                {voiceModeStatus === "listening" ? "Pause Mic" : "Resume Mic"}
+              </Button>
+
+              {voiceModeStatus === "speaking" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={stopSpeaking}
+                  className="text-xs border-zinc-800 text-rose-400 hover:bg-rose-500/10"
+                >
+                  Interrupt Voice
+                </Button>
+              )}
+
+              <Button
+                size="sm"
+                onClick={closeVoiceMode}
+                className="text-xs bg-zinc-800 text-zinc-200 hover:bg-zinc-700"
+              >
+                Return to Chat
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* OpenAI ChatGPT Configuration Modal */}
       <Dialog open={isKeyModalOpen} onOpenChange={setIsKeyModalOpen}>
@@ -497,7 +993,7 @@ export default function AIAssistantPage() {
                 onChange={(e) => setTempModel(e.target.value)}
                 className="w-full h-10 px-3 rounded-lg border border-border bg-surface text-xs text-foreground focus:outline-none focus:border-primary"
               >
-                <option value="gpt-4o-mini">gpt-4o-mini (Recommended — fast & precise)</option>
+                <option value="gpt-4o-mini">gpt-4o-mini (Recommended — fast &amp; precise)</option>
                 <option value="gpt-4o">gpt-4o (Most capable financial reasoning)</option>
                 <option value="gpt-3.5-turbo">gpt-3.5-turbo (Legacy fast model)</option>
               </select>
@@ -542,7 +1038,7 @@ export default function AIAssistantPage() {
                 onClick={handleSaveOpenAIKey}
                 className="text-xs bg-primary text-black font-semibold hover:bg-primary/90"
               >
-                Save & Connect
+                Save &amp; Connect
               </Button>
             </div>
           </DialogFooter>
@@ -551,4 +1047,3 @@ export default function AIAssistantPage() {
     </div>
   );
 }
-
