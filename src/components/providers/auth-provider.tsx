@@ -84,7 +84,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadProfile = useCallback(
     async (userId: string, email?: string | null, name?: string | null) => {
-      if (!hasFirebase) {
+      const auth = getFirebaseAuth();
+      if (
+        !hasFirebase ||
+        !auth?.currentUser ||
+        isDemoMode ||
+        userId === "demo-user" ||
+        userId.startsWith("usr-demo")
+      ) {
         return fyzaStore.getProfile();
       }
       try {
@@ -108,7 +115,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         };
         const ok = await upsertUserProfile(newProf);
         if (!ok) {
-          console.warn("Notice: Firestore profile write deferred (using local profile). To enable cloud sync, publish rules in Firebase Console.");
           return fyzaStore.getProfile();
         }
         return newProf;
@@ -117,7 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return fyzaStore.getProfile();
       }
     },
-    [hasFirebase]
+    [hasFirebase, isDemoMode]
   );
 
   const refreshProfile = useCallback(async () => {
@@ -348,7 +354,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const updateProfile = async (data: Partial<Profile>) => {
     if (!user) return { error: "Not authenticated" };
 
-    if (!hasFirebase || isDemoMode) {
+    const auth = getFirebaseAuth();
+    if (!hasFirebase || isDemoMode || !auth?.currentUser || user.id.startsWith("usr-demo") || user.id === "demo-user") {
       const updated = fyzaStore.updateProfile(data);
       setProfile(updated);
       return { error: null };
