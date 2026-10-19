@@ -47,6 +47,11 @@ service cloud.firestore {
       allow read, write: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid);
     }
 
+    // Goal contributions collection
+    match /goal_contributions/{contribId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid);
+    }
+
     // Notifications collection
     match /notifications/{notificationId} {
       allow read, write: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid);
@@ -60,9 +65,15 @@ service cloud.firestore {
       allow read, write: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid);
     }
 
-    // Authenticated fallback for all other collections
-    match /{document=**} {
-      allow read, write: if isAuthenticated();
+    // User preferences & AI interactions
+    match /user_preferences/{prefId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid);
+    }
+    match /ai_conversations/{convId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid);
+    }
+    match /ai_messages/{msgId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid);
     }
   }
 }

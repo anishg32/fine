@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const isDemo = request.cookies.get("fyza_demo_session")?.value === "true";
   const isAuth = request.cookies.get("fyza_session")?.value === "true";
   const isAuthenticated = isAuth || isDemo;
