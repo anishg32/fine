@@ -8,6 +8,7 @@ import {
   Sliders,
   AlertTriangle,
   Clock,
+  Target,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -85,7 +86,7 @@ export default function GoalsPage() {
     const income = calculatePeriodIncome(curMonthTxs);
     const expenses = calculatePeriodExpenses(curMonthTxs);
     const net = calculateNetCashFlow(income, expenses);
-    return net > 0 ? net : 9615100; // default ₹96,151 if no data
+    return Math.max(0, net);
   }, [transactions, currentMonthPrefix]);
 
   const handleOpenCreate = () => {
@@ -211,108 +212,129 @@ export default function GoalsPage() {
       </Card>
 
       {/* Goals Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {goals.map((goal) => {
-          const pct = Math.min(
-            100,
-            Math.round((goal.current_amount / goal.target_amount) * 100)
-          );
-          const isDone = goal.current_amount >= goal.target_amount;
-          const pacing = calculateGoalMonthlyTarget(
-            goal.target_amount,
-            goal.current_amount,
-            goal.target_date
-          );
+      {goals.length === 0 ? (
+        <Card className="border-dashed border-border/80 bg-surface/40 p-12 text-center">
+          <div className="max-w-md mx-auto space-y-3">
+            <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary mx-auto flex items-center justify-center">
+              <Target className="h-6 w-6" />
+            </div>
+            <h3 className="text-base font-bold text-foreground">No savings goals established yet</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Turn life milestones into measurable targets. Establish your emergency fund, vacation target, or home down payment. Fyza will calculate monthly contributions tailored to your actual cash flow.
+            </p>
+            <Button
+              onClick={handleOpenCreate}
+              size="sm"
+              className="bg-primary text-black font-semibold hover:bg-primary/90 text-xs shadow-sm shadow-primary/20"
+            >
+              <Plus className="h-4 w-4 mr-1.5" /> Establish Your First Goal
+            </Button>
+          </div>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {goals.map((goal) => {
+            const pct = Math.min(
+              100,
+              Math.round((goal.current_amount / goal.target_amount) * 100)
+            );
+            const isDone = goal.current_amount >= goal.target_amount;
+            const pacing = calculateGoalMonthlyTarget(
+              goal.target_amount,
+              goal.current_amount,
+              goal.target_date
+            );
 
-          return (
-            <Card key={goal.id} className="hover:border-primary/40 transition-colors flex flex-col justify-between">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-primary">
-                      {goal.category}
-                    </span>
-                    <CardTitle className="text-base font-bold text-foreground mt-0.5">
-                      {goal.name}
-                    </CardTitle>
-                  </div>
-                  <button
-                    onClick={() => handleDeleteGoal(goal.id)}
-                    className="text-muted-foreground hover:text-destructive p-1 rounded"
-                    title="Delete goal"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
-                {goal.description && (
-                  <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
-                    {goal.description}
-                  </p>
-                )}
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <div className="flex justify-between text-xs mb-1.5">
-                    <span className="font-semibold text-foreground">
-                      {formatCurrency(goal.current_amount, "INR")}
-                    </span>
-                    <span className="text-muted-foreground">
-                      Target: {formatCurrency(goal.target_amount, "INR")}
-                    </span>
-                  </div>
-                  <Progress
-                    value={pct}
-                    indicatorClassName={isDone ? "bg-emerald-400" : "bg-primary"}
-                    className="h-2.5"
-                  />
-                  <div className="flex justify-between text-[11px] text-muted-foreground mt-1.5">
-                    <span className="font-medium">{pct}% funded</span>
-                    <span>
-                      {isDone
-                        ? "Milestone completed! 🎉"
-                        : `${formatCurrency(goal.target_amount - goal.current_amount, "INR")} to go`}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Target Date Pacing Recommendation */}
-                {goal.target_date && !isDone && pacing.recommendedMonthlyMinor > 0 && (
-                  <div className="p-2.5 rounded-lg bg-surface border border-border text-[11px] text-muted-foreground space-y-0.5">
-                    <div className="flex items-center gap-1.5 font-semibold text-foreground">
-                      <Calendar className="h-3.5 w-3.5 text-primary" />
-                      <span>Target: {goal.target_date}</span>
+            return (
+              <Card key={goal.id} className="hover:border-primary/40 transition-colors flex flex-col justify-between">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-primary">
+                        {goal.category}
+                      </span>
+                      <CardTitle className="text-base font-bold text-foreground mt-0.5">
+                        {goal.name}
+                      </CardTitle>
                     </div>
-                    <p>
-                      Save <span className="font-bold text-primary">{formatCurrency(pacing.recommendedMonthlyMinor, "INR")}</span> / mo to reach by deadline ({pacing.monthsRemaining} mos).
-                    </p>
+                    <button
+                      onClick={() => handleDeleteGoal(goal.id)}
+                      className="text-muted-foreground hover:text-destructive p-1 rounded"
+                      title="Delete goal"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
-                )}
+                  {goal.description && (
+                    <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                      {goal.description}
+                    </p>
+                  )}
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-xs mb-1.5">
+                      <span className="font-semibold text-foreground">
+                        {formatCurrency(goal.current_amount, "INR")}
+                      </span>
+                      <span className="text-muted-foreground">
+                        Target: {formatCurrency(goal.target_amount, "INR")}
+                      </span>
+                    </div>
+                    <Progress
+                      value={pct}
+                      indicatorClassName={isDone ? "bg-emerald-400" : "bg-primary"}
+                      className="h-2.5"
+                    />
+                    <div className="flex justify-between text-[11px] text-muted-foreground mt-1.5">
+                      <span className="font-medium">{pct}% funded</span>
+                      <span>
+                        {isDone
+                          ? "Milestone completed! 🎉"
+                          : `${formatCurrency(goal.target_amount - goal.current_amount, "INR")} to go`}
+                      </span>
+                    </div>
+                  </div>
 
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleOpenPacing(goal)}
-                    className="flex-1 text-xs font-semibold flex items-center justify-center gap-1"
-                  >
-                    <Sliders className="h-3.5 w-3.5 text-primary" />
-                    Pacing Plan
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={isDone ? "outline" : "default"}
-                    onClick={() => handleOpenContribute(goal)}
-                    disabled={isDone}
-                    className="flex-1 text-xs font-semibold"
-                  >
-                    {isDone ? "Completed" : "Contribute"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                  {/* Target Date Pacing Recommendation */}
+                  {goal.target_date && !isDone && pacing.recommendedMonthlyMinor > 0 && (
+                    <div className="p-2.5 rounded-lg bg-surface border border-border text-[11px] text-muted-foreground space-y-0.5">
+                      <div className="flex items-center gap-1.5 font-semibold text-foreground">
+                        <Calendar className="h-3.5 w-3.5 text-primary" />
+                        <span>Target: {goal.target_date}</span>
+                      </div>
+                      <p>
+                        Save <span className="font-bold text-primary">{formatCurrency(pacing.recommendedMonthlyMinor, "INR")}</span> / mo to reach by deadline ({pacing.monthsRemaining} mos).
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleOpenPacing(goal)}
+                      className="flex-1 text-xs font-semibold flex items-center justify-center gap-1"
+                    >
+                      <Sliders className="h-3.5 w-3.5 text-primary" />
+                      Pacing Plan
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant={isDone ? "outline" : "default"}
+                      onClick={() => handleOpenContribute(goal)}
+                      disabled={isDone}
+                      className="flex-1 text-xs font-semibold"
+                    >
+                      {isDone ? "Completed" : "Contribute"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       {/* PART 4: SMART GOAL PACING PLANNER DIALOG */}
       {selectedGoal && pacingOptions && (

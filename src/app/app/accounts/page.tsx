@@ -163,75 +163,96 @@ export default function AccountsPage() {
       </Card>
 
       {/* Accounts Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {accounts.map((acc) => {
-          const Icon = getAccountIcon(acc.type);
-          const isNegative = acc.current_balance < 0;
+      {accounts.length === 0 ? (
+        <Card className="border-dashed border-border/80 bg-surface/40 p-12 text-center">
+          <div className="max-w-md mx-auto space-y-3">
+            <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary mx-auto flex items-center justify-center">
+              <Wallet className="h-6 w-6" />
+            </div>
+            <h3 className="text-base font-bold text-foreground">No accounts connected yet</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Add your primary savings bank, credit card, or cash wallet to start tracking accurate balances, net cash flow, and overall net worth.
+            </p>
+            <Button
+              onClick={handleOpenAdd}
+              size="sm"
+              className="bg-primary text-black font-semibold hover:bg-primary/90 text-xs shadow-sm shadow-primary/20"
+            >
+              <Plus className="h-4 w-4 mr-1.5" /> Add Your First Account
+            </Button>
+          </div>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {accounts.map((acc) => {
+            const Icon = getAccountIcon(acc.type);
+            const isNegative = acc.current_balance < 0;
 
-          return (
-            <Card key={acc.id} className="hover:border-primary/40 transition-colors">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
-                      style={{
-                        backgroundColor: acc.color ? `${acc.color}20` : "rgba(72, 214, 160, 0.15)",
-                        color: acc.color || "#48D6A0",
-                      }}
-                    >
-                      <Icon className="h-5 w-5" />
+            return (
+              <Card key={acc.id} className="hover:border-primary/40 transition-colors">
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0"
+                        style={{
+                          backgroundColor: acc.color ? `${acc.color}20` : "rgba(72, 214, 160, 0.15)",
+                          color: acc.color || "#48D6A0",
+                        }}
+                      >
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-base font-bold text-foreground">
+                          {acc.name}
+                        </CardTitle>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                          {acc.type}
+                        </span>
+                      </div>
                     </div>
-                    <div>
-                      <CardTitle className="text-base font-bold text-foreground">
-                        {acc.name}
-                      </CardTitle>
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                        {acc.type}
-                      </span>
+
+                    <div className="flex items-center gap-1">
+                      <button
+                        onClick={() => handleOpenEdit(acc)}
+                        className="p-1 rounded text-muted-foreground hover:text-foreground"
+                        title="Edit account"
+                      >
+                        <Edit2 className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteAccount(acc.id)}
+                        className="p-1 rounded text-muted-foreground hover:text-destructive"
+                        title="Delete account"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
                     </div>
                   </div>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {acc.description && (
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {acc.description}
+                    </p>
+                  )}
 
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={() => handleOpenEdit(acc)}
-                      className="p-1 rounded text-muted-foreground hover:text-foreground"
-                      title="Edit account"
+                  <div className="pt-2 border-t border-border/60 flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">Current Balance</span>
+                    <span
+                      className={`text-lg font-bold ${
+                        isNegative ? "text-rose-400" : "text-foreground"
+                      }`}
                     >
-                      <Edit2 className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteAccount(acc.id)}
-                      className="p-1 rounded text-muted-foreground hover:text-destructive"
-                      title="Delete account"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+                      {formatCurrency(acc.current_balance, acc.currency)}
+                    </span>
                   </div>
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {acc.description && (
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {acc.description}
-                  </p>
-                )}
-
-                <div className="pt-2 border-t border-border/60 flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">Current Balance</span>
-                  <span
-                    className={`text-lg font-bold ${
-                      isNegative ? "text-rose-400" : "text-foreground"
-                    }`}
-                  >
-                    {formatCurrency(acc.current_balance, acc.currency)}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       {/* Add / Edit Account Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

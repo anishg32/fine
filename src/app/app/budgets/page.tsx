@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Plus } from "lucide-react";
+import { Plus, PiggyBank } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -134,7 +134,7 @@ export default function BudgetsPage() {
       </div>
 
       {/* Main Budget Card */}
-      {activeBudget && (
+      {activeBudget ? (
         <Card className="border-primary/30 bg-gradient-to-br from-card to-surface">
           <CardHeader className="pb-3">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -209,6 +209,25 @@ export default function BudgetsPage() {
             </div>
           </CardContent>
         </Card>
+      ) : (
+        <Card className="border-dashed border-border/80 bg-surface/40 p-10 text-center">
+          <div className="max-w-md mx-auto space-y-3">
+            <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary mx-auto flex items-center justify-center">
+              <PiggyBank className="h-6 w-6" />
+            </div>
+            <h3 className="text-base font-bold text-foreground">No budget configured for this month</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Set deliberate spending caps for your essential living and discretionary expenses. Fyza will track your limits and alert you before you overspend.
+            </p>
+            <Button
+              onClick={handleOpenCreate}
+              size="sm"
+              className="bg-primary text-black font-semibold hover:bg-primary/90 text-xs shadow-sm shadow-primary/20"
+            >
+              <Plus className="h-4 w-4 mr-1.5" /> Set Monthly Budget
+            </Button>
+          </div>
+        </Card>
       )}
 
       {/* Category Allocations Grid */}
@@ -216,57 +235,67 @@ export default function BudgetsPage() {
         <h3 className="text-base font-bold text-foreground mb-4">
           Category Allocations & Spent
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {categorySpending.map(({ cat, spent, limit, utilization: catUtil, remaining: catRem }) => (
-            <Card key={cat.id} className="hover:border-primary/40 transition-colors">
-              <CardContent className="p-4 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="h-7 w-7 rounded-lg flex items-center justify-center text-xs font-bold"
-                      style={{ backgroundColor: `${cat.color}20`, color: cat.color }}
-                    >
-                      {cat.name[0]}
+        {categorySpending.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {categorySpending.map(({ cat, spent, limit, utilization: catUtil, remaining: catRem }) => (
+              <Card key={cat.id} className="hover:border-primary/40 transition-colors">
+                <CardContent className="p-4 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="h-7 w-7 rounded-lg flex items-center justify-center text-xs font-bold"
+                        style={{ backgroundColor: `${cat.color}20`, color: cat.color }}
+                      >
+                        {cat.name[0]}
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-bold text-foreground">{cat.name}</h4>
+                        <p className="text-[10px] text-muted-foreground">
+                          Limit: {formatCurrency(limit, "INR")}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="text-xs font-bold text-foreground">{cat.name}</h4>
+                    <div className="text-right">
+                      <p className="text-xs font-bold text-foreground">
+                        {formatCurrency(spent, "INR")}
+                      </p>
                       <p className="text-[10px] text-muted-foreground">
-                        Limit: {formatCurrency(limit, "INR")}
+                        {catUtil.toFixed(1)}% used
                       </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-xs font-bold text-foreground">
-                      {formatCurrency(spent, "INR")}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground">
-                      {catUtil.toFixed(1)}% used
-                    </p>
+
+                  <Progress
+                    value={Math.min(100, catUtil)}
+                    indicatorClassName={
+                      catUtil > 100
+                        ? "bg-rose-500"
+                        : catUtil > 85
+                        ? "bg-amber-400"
+                        : "bg-primary"
+                    }
+                    className="h-2"
+                  />
+
+                  <div className="flex justify-between text-[10px] text-muted-foreground">
+                    <span>{catRem > 0 ? `${formatCurrency(catRem, "INR")} left` : "Limit reached"}</span>
+                    <span className={catUtil > 100 ? "text-rose-400 font-semibold" : "text-emerald-400"}>
+                      {catUtil > 100 ? "Over budget" : "Healthy"}
+                    </span>
                   </div>
-                </div>
-
-                <Progress
-                  value={Math.min(100, catUtil)}
-                  indicatorClassName={
-                    catUtil > 100
-                      ? "bg-rose-500"
-                      : catUtil > 85
-                      ? "bg-amber-400"
-                      : "bg-primary"
-                  }
-                  className="h-2"
-                />
-
-                <div className="flex justify-between text-[10px] text-muted-foreground">
-                  <span>{catRem > 0 ? `${formatCurrency(catRem, "INR")} left` : "Limit reached"}</span>
-                  <span className={catUtil > 100 ? "text-rose-400 font-semibold" : "text-emerald-400"}>
-                    {catUtil > 100 ? "Over budget" : "Healthy"}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card className="border border-border/60 bg-surface/30 p-8 text-center">
+            <p className="text-xs text-muted-foreground">
+              {activeBudget
+                ? "No expense transactions recorded yet for this month."
+                : "Establish a monthly budget above to activate category spending limits and real-time tracking."}
+            </p>
+          </Card>
+        )}
       </div>
 
       {/* Budget Creation/Edit Dialog */}
