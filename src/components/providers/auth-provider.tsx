@@ -106,10 +106,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
-        await upsertUserProfile(newProf);
+        const ok = await upsertUserProfile(newProf);
+        if (!ok) {
+          console.warn("Notice: Firestore profile write deferred (using local profile). To enable cloud sync, publish rules in Firebase Console.");
+          return fyzaStore.getProfile();
+        }
         return newProf;
       } catch (err) {
-        console.error("Failed to load profile:", err);
+        console.warn("Firestore profile access:", (err as Error)?.message || err);
         return fyzaStore.getProfile();
       }
     },

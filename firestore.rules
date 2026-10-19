@@ -6,85 +6,58 @@ service cloud.firestore {
     function isAuthenticated() {
       return request.auth != null;
     }
-    
-    // Helper to check user owns the document
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
-    }
 
-    // Profiles collection
+    // Profiles collection: owner only
     match /profiles/{userId} {
-      allow read: if isAuthenticated() && (request.auth.uid == userId);
-      allow create, update: if isAuthenticated() && (request.auth.uid == userId);
-      allow delete: if false; // Profiles preserved
+      allow read, write: if isAuthenticated() && request.auth.uid == userId;
     }
 
     // Accounts collection
     match /accounts/{accountId} {
-      allow read: if isAuthenticated() && (resource.data.user_id == request.auth.uid);
-      allow create: if isAuthenticated() && (request.resource.data.user_id == request.auth.uid);
-      allow update, delete: if isAuthenticated() && (resource.data.user_id == request.auth.uid);
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid);
     }
 
     // Categories collection (user custom or default read-only)
     match /categories/{categoryId} {
-      allow read: if isAuthenticated() && (resource.data.user_id == null || resource.data.user_id == request.auth.uid);
-      allow create: if isAuthenticated() && (request.resource.data.user_id == request.auth.uid);
-      allow update, delete: if isAuthenticated() && (resource.data.user_id == request.auth.uid);
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.user_id == null || resource.data.user_id == request.auth.uid);
     }
 
     // Transactions collection
     match /transactions/{transactionId} {
-      allow read: if isAuthenticated() && (resource.data.user_id == request.auth.uid);
-      allow create: if isAuthenticated() && (request.resource.data.user_id == request.auth.uid);
-      allow update, delete: if isAuthenticated() && (resource.data.user_id == request.auth.uid);
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid);
     }
 
     // Recurring transactions collection
     match /recurring_transactions/{recurringId} {
-      allow read: if isAuthenticated() && (resource.data.user_id == request.auth.uid);
-      allow create: if isAuthenticated() && (request.resource.data.user_id == request.auth.uid);
-      allow update, delete: if isAuthenticated() && (resource.data.user_id == request.auth.uid);
-    }
-
-    // Recurring occurrences collection
-    match /recurring_occurrences/{occurrenceId} {
-      allow read: if isAuthenticated() && (resource.data.user_id == request.auth.uid);
-      allow create: if isAuthenticated() && (request.resource.data.user_id == request.auth.uid);
-      allow update, delete: if isAuthenticated() && (resource.data.user_id == request.auth.uid);
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid);
     }
 
     // Budgets collection
     match /budgets/{budgetId} {
-      allow read: if isAuthenticated() && (resource.data.user_id == request.auth.uid);
-      allow create: if isAuthenticated() && (request.resource.data.user_id == request.auth.uid);
-      allow update, delete: if isAuthenticated() && (resource.data.user_id == request.auth.uid);
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid);
     }
 
     // Goals collection
     match /goals/{goalId} {
-      allow read: if isAuthenticated() && (resource.data.user_id == request.auth.uid);
-      allow create: if isAuthenticated() && (request.resource.data.user_id == request.auth.uid);
-      allow update, delete: if isAuthenticated() && (resource.data.user_id == request.auth.uid);
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid);
     }
 
     // Notifications collection
     match /notifications/{notificationId} {
-      allow read: if isAuthenticated() && (resource.data.user_id == request.auth.uid);
-      allow create: if isAuthenticated() && (request.resource.data.user_id == request.auth.uid);
-      allow update, delete: if isAuthenticated() && (resource.data.user_id == request.auth.uid);
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid);
     }
 
-    // Smart Insights collection
+    // Smart Insights & Simulations
     match /smart_insights/{insightId} {
-      allow read: if isAuthenticated() && (resource.data.user_id == request.auth.uid);
-      allow create, update, delete: if isAuthenticated() && (request.resource.data.user_id == request.auth.uid);
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid);
+    }
+    match /what_if_simulations/{simId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.user_id == request.auth.uid);
     }
 
-    // What-If Simulations collection
-    match /what_if_simulations/{simId} {
-      allow read: if isAuthenticated() && (resource.data.user_id == request.auth.uid);
-      allow create, update, delete: if isAuthenticated() && (request.resource.data.user_id == request.auth.uid);
+    // Authenticated fallback for all other collections
+    match /{document=**} {
+      allow read, write: if isAuthenticated();
     }
   }
 }

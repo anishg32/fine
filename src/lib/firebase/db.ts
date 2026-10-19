@@ -41,7 +41,7 @@ export async function fetchUserProfile(userId: string): Promise<Profile | null> 
     }
     return null;
   } catch (err) {
-    console.error("fetchUserProfile error:", err);
+    console.warn("Firestore fetchUserProfile:", (err as Error)?.message || err);
     return null;
   }
 }
@@ -54,7 +54,7 @@ export async function upsertUserProfile(profile: Profile): Promise<boolean> {
     await setDoc(docRef, { ...profile, updated_at: new Date().toISOString() }, { merge: true });
     return true;
   } catch (err) {
-    console.error("upsertUserProfile error:", err);
+    console.warn("Firestore upsertUserProfile:", (err as Error)?.message || err);
     return false;
   }
 }
