@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Fyza Browser Agent</title>
+  <style>
+    body {
+      width: 320px;
+      margin: 0;
+      padding: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #080C10;
+      color: #F4F7FA;
+      box-sizing: border-box;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .badge {
+      font-size: 10px;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      background: rgba(49, 230, 160, 0.15);
+      color: #31E6A0;
+      border: 1px solid rgba(49, 230, 160, 0.3);
+      font-weight: 600;
+    }
+    .title {
+      font-size: 14px;
+      font-weight: 700;
+      margin: 0;
+    }
+    .status-card {
+      margin-top: 14px;
+      padding: 12px;
+      border-radius: 10px;
+      background: #111923;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-size: 12px;
+    }
+    .status-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .status-label {
+      color: #95A2B3;
+    }
+    .status-val {
+      font-weight: 600;
+      color: #31E6A0;
+    }
+    .instructions {
+      font-size: 11px;
+      color: #95A2B3;
+      line-height: 1.5;
+      margin-top: 12px;
+    }
+    .btn {
+      width: 100%;
+      margin-top: 12px;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 90, 121, 0.3);
+      background: rgba(255, 90, 121, 0.1);
+      color: #FF5A79;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn:hover {
+      background: rgba(255, 90, 121, 0.2);
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 class="title">Fyza Browser Agent</h1>
+    <span class="badge">v1.0.0</span>
+  </div>
+
+  <div class="status-card">
+    <div class="status-row">
+      <span class="status-label">Bridge Status</span>
+      <span class="status-val" id="bridge-status">Active 🟢</span>
+    </div>
+    <div class="status-row">
+      <span class="status-label">Authorized Host</span>
+      <span style="color: #F4F7FA; font-family: monospace;">localhost:3000</span>
+    </div>
+    <div class="status-row" style="margin-bottom: 0;">
+      <span class="status-label">Current Tab</span>
+      <span id="tab-url" style="color: #F4F7FA; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Detecting...</span>
+    </div>
+  </div>
+
+  <p class="instructions">
+    This extension executes authorized actions requested from your Fyza AI chat window. All external actions require explicit confirmation in your chatbox.
+  </p>
+
+  <button class="btn" id="pause-btn">Revoke Active Permissions</button>
+
+  <script src="popup.js"></script>
+</body>
+</html>

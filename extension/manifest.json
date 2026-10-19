@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "Fyza Browser Control Agent",
+  "version": "1.0.0",
+  "description": "Authorized browser-control companion extension for Fyza AI Assistant.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "http://localhost:3000/*",
+    "https://*.fyza.finance/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost:3000/*",
+        "https://*.fyza.finance/*"
+      ],
+      "js": ["content-bridge.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Fyza Browser Agent"
+  }
+}

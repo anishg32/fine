@@ -1,6 +1,6 @@
 "use client";
-
 import React, { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import {
   Bot,
   Send,
@@ -18,6 +18,15 @@ import {
   Copy,
   Check,
   Headphones,
+  Compass,
+  ExternalLink,
+  ShieldAlert,
+  ShieldCheck,
+  CheckCheck,
+  XCircle,
+  Play,
+  Puzzle,
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,22 +51,29 @@ import {
   calculateEmergencyBuffer,
 } from "@/lib/calculations";
 import type { AIMessage, RecurringTransaction } from "@/lib/types";
+import { AgentExecutor } from "@/lib/agent/executor";
+import type { AgentAction } from "@/lib/agent/types";
 import { toast } from "sonner";
 
 const CONVERSATIONAL_PROMPTS = [
+  "Open my dashboard",
+  "Show my expenses from this month",
+  "Open budgets",
+  "Open savings goals",
+  "Change to dark mode",
+  "Switch to ocean blue",
+  "Go back",
+  "Open a new tab and visit https://github.com/anishg32/fine",
+  "Summarize this page",
   "Can we talk about my money?",
-  "Tell me more",
-  "Give me an example",
-  "What should I do first?",
-  "How do I stop impulse spending?",
   "Where did most of my money go?",
   "Can I afford a purchase of ₹15,000?",
   "How can I improve my savings rate?",
-  "Tell me a financial tip",
 ];
 
 interface ChatMessageExtended extends AIMessage {
   source?: "live_ai" | "deterministic_engine";
+  action?: AgentAction;
 }
 
 function cleanTextForSpeech(text: string): string {
@@ -69,14 +85,148 @@ function cleanTextForSpeech(text: string): string {
     .trim();
 }
 
+function ActionControlCard({
+  action,
+  onExecute,
+  onReject,
+}: {
+  action: AgentAction;
+  onExecute: () => void;
+  onReject: () => void;
+}) {
+  const getRiskBadge = (risk: string) => {
+    switch (risk) {
+      case "low":
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 shadow-sm">
+            <ShieldCheck className="h-3 w-3" /> LOW RISK
+          </span>
+        );
+      case "high":
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/30 shadow-sm">
+            <ShieldAlert className="h-3 w-3" /> HIGH RISK • CONFIRMATION REQUIRED
+          </span>
+        );
+      case "medium":
+      default:
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-400 border border-amber-500/30 shadow-sm">
+            <ShieldAlert className="h-3 w-3" /> MEDIUM RISK • APPROVAL REQUIRED
+          </span>
+        );
+    }
+  };
+
+  const getStatusText = () => {
+    switch (action.status) {
+      case "preparing":
+        return "Preparing action...";
+      case "waiting_approval":
+        return "Waiting for your approval...";
+      case "executing":
+        return "Executing action...";
+      case "completed":
+        return "Action completed.";
+      case "failed":
+        return action.error ? `Action failed: ${action.error}` : "Action failed.";
+      case "cancelled":
+        return "Action cancelled by user.";
+      default:
+        return "Ready";
+    }
+  };
+
+  const isPending = action.status === "waiting_approval" || action.status === "preparing";
+
+  return (
+    <div className="mt-3 p-3.5 rounded-xl border border-primary/20 bg-surface-secondary/90 backdrop-blur-md space-y-3 shadow-md">
+      {/* Title & Risk Badge */}
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
+          <div className="h-6 w-6 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center text-primary">
+            <Compass className="h-3.5 w-3.5" />
+          </div>
+          <span className="text-xs font-bold text-foreground">{action.title}</span>
+        </div>
+        {getRiskBadge(action.risk)}
+      </div>
+
+      {/* Description */}
+      <p className="text-xs text-muted-foreground leading-relaxed">{action.description}</p>
+
+      {/* Target Preview */}
+      {action.target && (
+        <div className="px-2.5 py-1.5 rounded-lg bg-surface border border-border/80 text-[11px] font-mono flex items-center justify-between gap-2 overflow-hidden text-ellipsis">
+          <span className="text-muted-foreground truncate">Target: {action.target}</span>
+          {action.type === "open_authorized_external_url" && (
+            <ExternalLink className="h-3 w-3 shrink-0 text-primary" />
+          )}
+        </div>
+      )}
+
+      {/* Control Status and Execution Buttons */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-1 border-t border-border/40 text-[11px]">
+        <div className="flex items-center gap-1.5 text-muted-foreground">
+          {action.status === "executing" && (
+            <span className="h-2 w-2 rounded-full bg-primary animate-ping shrink-0" />
+          )}
+          {action.status === "completed" && (
+            <CheckCheck className="h-3.5 w-3.5 text-emerald-400 shrink-0" />
+          )}
+          {action.status === "failed" && (
+            <XCircle className="h-3.5 w-3.5 text-rose-400 shrink-0" />
+          )}
+          <span
+            className={`font-medium ${
+              action.status === "completed"
+                ? "text-emerald-400"
+                : action.status === "failed"
+                ? "text-rose-400"
+                : action.status === "cancelled"
+                ? "text-muted-foreground line-through"
+                : "text-foreground/90"
+            }`}
+          >
+            {getStatusText()}
+          </span>
+        </div>
+
+        {/* Action Buttons */}
+        {isPending && (
+          <div className="flex items-center gap-2 self-end sm:self-auto">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onReject}
+              className="h-7 text-xs px-2.5 text-muted-foreground hover:text-foreground"
+            >
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={onExecute}
+              className="h-7 text-xs px-3 bg-primary text-black font-semibold hover:bg-primary/90 shadow-sm flex items-center gap-1.5"
+            >
+              <Play className="h-3 w-3 fill-current" />
+              {action.requiresApproval ? "Approve & Execute" : "Execute Now"}
+            </Button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function AIAssistantPage() {
+  const router = useRouter();
   const [messages, setMessages] = useState<ChatMessageExtended[]>([
     {
       id: "msg-welcome",
       conversation_id: "conv-1",
       role: "assistant",
       content:
-        "Hello! 👋 I'm **Fyza AI**, your personal financial assistant.\n\nI'm right here to talk through your money with you — whether you want to check your spending, see if you can afford an upcoming purchase, plan a budget, or just chat through your goals.\n\nTalk to me naturally just like ChatGPT. What's on your mind today?",
+        "Hello! 👋 I'm **Fyza AI**, your personal financial assistant and website control agent.\n\nI can talk naturally through your money with you, or directly navigate Fyza pages, switch themes, and control authorized external browser tasks.\n\nTry asking: *\"Open my dashboard\"*, *\"Show my expenses from this month\"*, *\"Change to dark mode\"*, or *\"Open a new tab and visit https://github.com/anishg32/fine\"*!",
       created_at: "2026-10-15T00:00:00.000Z",
       source: "deterministic_engine",
     },
@@ -91,6 +241,10 @@ export default function AIAssistantPage() {
   const [isKeyModalOpen, setIsKeyModalOpen] = useState(false);
   const [tempApiKey, setTempApiKey] = useState("");
   const [tempModel, setTempModel] = useState("gpt-4o-mini");
+
+  // Browser Control Companion Extension State
+  const [isExtensionActive, setIsExtensionActive] = useState(false);
+  const [isExtensionModalOpen, setIsExtensionModalOpen] = useState(false);
 
   // Voice & Talking States
   const [isListening, setIsListening] = useState(false);
@@ -119,6 +273,15 @@ export default function AIAssistantPage() {
       setTempApiKey(savedKey);
       setTempModel(savedModel);
     }
+  }, []);
+
+  // Poll for Companion Extension presence
+  useEffect(() => {
+    setIsExtensionActive(AgentExecutor.isExtensionInstalled());
+    const interval = setInterval(() => {
+      setIsExtensionActive(AgentExecutor.isExtensionInstalled());
+    }, 2000);
+    return () => clearInterval(interval);
   }, []);
 
   const scrollToBottom = () => {
@@ -280,6 +443,7 @@ export default function AIAssistantPage() {
           content: data.reply,
           created_at: new Date().toISOString(),
           source: data.source || "deterministic_engine",
+          action: data.action,
         };
         setMessages((prev) => [...prev, assistantMsg]);
         return data.reply;
@@ -293,6 +457,54 @@ export default function AIAssistantPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleExecuteAction = async (msgId: string, action: AgentAction) => {
+    // 1. Update action status to executing
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === msgId && m.action
+          ? { ...m, action: { ...m.action, status: "executing" } }
+          : m
+      )
+    );
+
+    // 2. Execute via AgentExecutor
+    const res = await AgentExecutor.executeAction(action, (path) => {
+      router.push(path);
+    });
+
+    // 3. Update status on completion or failure
+    if (res.success) {
+      toast.success(res.result || "Action executed successfully!");
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === msgId && m.action
+            ? { ...m, action: { ...m.action, status: "completed" } }
+            : m
+        )
+      );
+    } else {
+      toast.error(res.error || "Action execution failed.");
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === msgId && m.action
+            ? { ...m, action: { ...m.action, status: "failed", error: res.error } }
+            : m
+        )
+      );
+    }
+  };
+
+  const handleRejectAction = (msgId: string) => {
+    setMessages((prev) =>
+      prev.map((m) =>
+        m.id === msgId && m.action
+          ? { ...m, action: { ...m.action, status: "cancelled" } }
+          : m
+      )
+    );
+    toast.info("Action cancelled by user.");
   };
 
   const handleRetryLast = () => {
@@ -587,6 +799,22 @@ export default function AIAssistantPage() {
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Companion Extension Status Indicator */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsExtensionModalOpen(true)}
+            className={`text-xs flex items-center gap-1.5 h-8 border transition-all ${
+              isExtensionActive
+                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-400 shadow-sm"
+                : "border-border text-muted-foreground hover:text-foreground"
+            }`}
+            title="Fyza Browser Control Extension Status"
+          >
+            <Puzzle className="h-3.5 w-3.5" />
+            {isExtensionActive ? "Extension: Connected" : "Extension: Setup"}
+          </Button>
+
           {/* ChatGPT-style Live Voice Mode Button */}
           <Button
             variant="outline"
@@ -676,6 +904,15 @@ export default function AIAssistantPage() {
                 >
                   {m.content}
                 </div>
+
+                {/* Website Control Action Card */}
+                {m.action && (
+                  <ActionControlCard
+                    action={m.action}
+                    onExecute={() => handleExecuteAction(m.id, m.action!)}
+                    onReject={() => handleRejectAction(m.id)}
+                  />
+                )}
 
                 {!isUser && (
                   <div className="flex items-center justify-between gap-2 px-1 text-[11px] text-muted-foreground">
@@ -1041,6 +1278,73 @@ export default function AIAssistantPage() {
                 Save &amp; Connect
               </Button>
             </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Companion Browser Extension Modal */}
+      <Dialog open={isExtensionModalOpen} onOpenChange={setIsExtensionModalOpen}>
+        <DialogContent className="sm:max-w-md bg-surface border-border">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base font-bold text-foreground">
+              <Puzzle className="h-4 w-4 text-primary" />
+              Browser Control Companion Extension
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground">
+              Fyza uses an explicitly authorized companion extension to safely assist you with external websites without compromising browser security.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3.5 py-2">
+            {isExtensionActive ? (
+              <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-start gap-2.5 text-xs text-emerald-400">
+                <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-bold">Companion Extension Connected</p>
+                  <p className="text-[11px] text-emerald-400/80 mt-0.5">
+                    Fyza is connected to your browser companion. You can now request authorized external tab actions, page summaries, and guided browser workflows.
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="p-3.5 rounded-xl bg-surface-secondary border border-border space-y-2 text-xs">
+                <div className="flex items-center gap-2 text-amber-400 font-semibold text-xs">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span>Extension Not Detected in Active Tab</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Web browsers enforce strict Same-Origin policies preventing standard web apps from controlling other tabs. To enable external browser actions, load the bundled companion extension:
+                </p>
+                <ol className="list-decimal list-inside space-y-1 text-[11px] text-foreground font-medium pl-1">
+                  <li>Open <code className="bg-surface px-1 py-0.5 rounded text-primary">chrome://extensions</code> in your browser</li>
+                  <li>Enable the <span className="text-primary">Developer mode</span> switch (top-right)</li>
+                  <li>Click <span className="text-primary">Load unpacked</span></li>
+                  <li>Select the <code className="bg-surface px-1 py-0.5 rounded">fine wise/extension</code> directory</li>
+                </ol>
+              </div>
+            )}
+
+            <div className="p-3 rounded-lg bg-surface border border-border space-y-1.5 text-[11px] text-muted-foreground">
+              <p className="font-semibold text-foreground flex items-center gap-1.5">
+                <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" /> Security Guarantee
+              </p>
+              <ul className="list-disc list-inside space-y-0.5 text-[10px]">
+                <li>Zero background surveillance or history collection.</li>
+                <li>Actions require your explicit one-time confirmation.</li>
+                <li>Sandboxed DOM inspection with prompt-injection defense.</li>
+              </ul>
+            </div>
+          </div>
+
+          <DialogFooter className="flex sm:justify-end">
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => setIsExtensionModalOpen(false)}
+              className="text-xs bg-primary text-black font-semibold hover:bg-primary/90"
+            >
+              Done
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

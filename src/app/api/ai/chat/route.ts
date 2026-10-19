@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { createValidatedAction } from "@/lib/agent/registry";
+import type { AgentAction } from "@/lib/agent/types";
 
 export interface AIUpcomingBill {
   name: string;
@@ -55,6 +57,413 @@ const SUSPICIOUS_PATTERNS = [
   /forget\s+all\s+(your\s+)?rules/i,
   /you\s+must\s+override\s+your/i,
 ];
+
+function detectAgentActionFromQuery(message: string): { reply: string; action?: AgentAction } | null {
+  const lower = message.toLowerCase().trim();
+
+  // 1. Dashboard Navigation
+  if (
+    /\b(open|go to|view|show|navigate to)\s+(my\s+)?dashboard\b/i.test(lower) ||
+    lower === "open dashboard" ||
+    lower === "my dashboard" ||
+    lower === "dashboard"
+  ) {
+    const act = createValidatedAction(
+      "navigate_to_page",
+      "Open Dashboard",
+      "Navigating to your main Fyza financial overview dashboard.",
+      "/app"
+    );
+    if (act.success && act.action) {
+      return {
+        reply: "Opening your Dashboard overview right away! You can monitor your real-time net worth, recent activity, and financial health score.",
+        action: act.action,
+      };
+    }
+  }
+
+  // 2. Expenses / Transactions Navigation
+  if (
+    /\b(show|open|view|display)\s+(my\s+)?expenses(\s+from\s+this\s+month)?\b/i.test(lower) ||
+    /\b(open|show|view)\s+(my\s+)?transactions\b/i.test(lower) ||
+    lower === "open expenses" ||
+    lower === "show expenses" ||
+    lower === "expenses"
+  ) {
+    const act = createValidatedAction(
+      "open_expenses",
+      "Open Expenses",
+      "Navigating to transactions with the expense filter applied.",
+      "/app/transactions?type=expense"
+    );
+    if (act.success && act.action) {
+      return {
+        reply: "Opening your transactions ledger with the expense filter applied so you can review your spending from this month.",
+        action: act.action,
+      };
+    }
+  }
+
+  // 3. Budgets Navigation
+  if (
+    /\b(open|go to|view|show|manage)\s+(my\s+)?budgets?\b/i.test(lower) ||
+    lower === "open budgets" ||
+    lower === "budgets"
+  ) {
+    const act = createValidatedAction(
+      "open_budgets",
+      "Open Budgets",
+      "Navigating to your monthly budget limits and category spending caps.",
+      "/app/budgets"
+    );
+    if (act.success && act.action) {
+      return {
+        reply: "Navigating to your Budgets page where you can inspect your category spending limits and remaining capacity.",
+        action: act.action,
+      };
+    }
+  }
+
+  // 4. Savings Goals Navigation
+  if (
+    /\b(open|go to|view|show|manage)\s+(my\s+)?(savings\s+)?goals?\b/i.test(lower) ||
+    lower === "open goals" ||
+    lower === "savings goals" ||
+    lower === "goals"
+  ) {
+    const act = createValidatedAction(
+      "open_savings_goals",
+      "Open Savings Goals",
+      "Navigating to your savings targets and milestone tracking.",
+      "/app/goals"
+    );
+    if (act.success && act.action) {
+      return {
+        reply: "Opening your Savings Goals page to view your active targets and progress.",
+        action: act.action,
+      };
+    }
+  }
+
+  // 5. Accounts Navigation
+  if (
+    /\b(open|go to|view|show|manage)\s+(my\s+)?accounts?\b/i.test(lower) ||
+    lower === "open accounts" ||
+    lower === "accounts"
+  ) {
+    const act = createValidatedAction(
+      "navigate_to_page",
+      "Open Accounts",
+      "Navigating to your bank, cash, and wallet accounts.",
+      "/app/accounts"
+    );
+    if (act.success && act.action) {
+      return {
+        reply: "Opening your Accounts ledger to inspect liquid cash, savings, and card balances.",
+        action: act.action,
+      };
+    }
+  }
+
+  // 6. Analytics Navigation
+  if (
+    /\b(open|go to|view|show)\s+(my\s+)?analytics\b/i.test(lower) ||
+    lower === "open analytics" ||
+    lower === "analytics"
+  ) {
+    const act = createValidatedAction(
+      "navigate_to_page",
+      "Open Analytics",
+      "Navigating to financial analytics, category breakdowns, and cashflow charts.",
+      "/app/analytics"
+    );
+    if (act.success && act.action) {
+      return {
+        reply: "Opening Financial Analytics to inspect your cashflow breakdown and spending trends.",
+        action: act.action,
+      };
+    }
+  }
+
+  // 7. Forecast Navigation
+  if (
+    /\b(open|go to|view|show)\s+(my\s+)?forecast\b/i.test(lower) ||
+    lower.includes("cash flow forecast") ||
+    lower === "open forecast" ||
+    lower === "forecast"
+  ) {
+    const act = createValidatedAction(
+      "navigate_to_page",
+      "Open Forecast",
+      "Navigating to cash flow forecast and forward projections.",
+      "/app/forecast"
+    );
+    if (act.success && act.action) {
+      return {
+        reply: "Navigating to Cash Flow Forecast to view forward-looking balance projections.",
+        action: act.action,
+      };
+    }
+  }
+
+  // 8. Subscriptions Navigation
+  if (
+    /\b(open|go to|view|show|manage)\s+(my\s+)?subscriptions?\b/i.test(lower) ||
+    lower.includes("recurring bills") ||
+    lower === "open subscriptions" ||
+    lower === "subscriptions"
+  ) {
+    const act = createValidatedAction(
+      "navigate_to_page",
+      "Open Subscriptions",
+      "Navigating to recurring bills and active subscriptions.",
+      "/app/subscriptions"
+    );
+    if (act.success && act.action) {
+      return {
+        reply: "Opening your Subscriptions and recurring bills schedule.",
+        action: act.action,
+      };
+    }
+  }
+
+  // 9. Calendar Navigation
+  if (
+    /\b(open|go to|view|show)\s+(my\s+)?calendar\b/i.test(lower) ||
+    lower === "open calendar" ||
+    lower === "calendar"
+  ) {
+    const act = createValidatedAction(
+      "navigate_to_page",
+      "Open Financial Calendar",
+      "Navigates to your monthly bill schedule calendar.",
+      "/app/calendar"
+    );
+    if (act.success && act.action) {
+      return {
+        reply: "Opening your Financial Calendar to view upcoming payment dates and projected inflows.",
+        action: act.action,
+      };
+    }
+  }
+
+  // 10. Reports Navigation
+  if (
+    /\b(open|go to|view|show)\s+(my\s+)?reports?\b/i.test(lower) ||
+    lower === "open reports" ||
+    lower === "reports"
+  ) {
+    const act = createValidatedAction(
+      "navigate_to_page",
+      "Open Reports",
+      "Navigates to financial statements and exportable reports.",
+      "/app/reports"
+    );
+    if (act.success && act.action) {
+      return {
+        reply: "Opening your Financial Reports page.",
+        action: act.action,
+      };
+    }
+  }
+
+  // 11. Settings Navigation
+  if (
+    /\b(open|go to|view|show)\s+(my\s+)?settings\b/i.test(lower) ||
+    lower === "open settings" ||
+    lower === "settings"
+  ) {
+    const act = createValidatedAction(
+      "navigate_to_page",
+      "Open Settings",
+      "Navigates to application settings and theme customization.",
+      "/app/settings"
+    );
+    if (act.success && act.action) {
+      return {
+        reply: "Opening Settings where you can adjust your profile, security, and theme preferences.",
+        action: act.action,
+      };
+    }
+  }
+
+  // 12. Go Back
+  if (
+    /\b(go back|navigate back|back to previous( page)?)\b/i.test(lower) ||
+    lower === "go back" ||
+    lower === "back"
+  ) {
+    const act = createValidatedAction(
+      "go_back",
+      "Go Back",
+      "Navigates back to your previously visited page in browser history."
+    );
+    if (act.success && act.action) {
+      return {
+        reply: "Navigating back to the previous page.",
+        action: act.action,
+      };
+    }
+  }
+
+  // 13. Theme Switching
+  if (
+    lower.includes("dark mode") ||
+    lower.includes("dark theme") ||
+    lower.includes("emerald midnight") ||
+    lower.includes("change to dark") ||
+    lower.includes("switch to dark")
+  ) {
+    const act = createValidatedAction(
+      "set_theme",
+      "Set Theme: Emerald Midnight",
+      "Switches visual identity to signature Emerald Midnight dark theme.",
+      "emerald-midnight",
+      { theme: "emerald-midnight" }
+    );
+    if (act.success && act.action) {
+      return {
+        reply: "Switching Fyza to the Emerald Midnight dark theme.",
+        action: act.action,
+      };
+    }
+  }
+
+  if (lower.includes("ocean blue") || lower.includes("blue theme")) {
+    const act = createValidatedAction(
+      "set_theme",
+      "Set Theme: Ocean Blue",
+      "Switches visual identity to Ocean Blue theme.",
+      "ocean-blue",
+      { theme: "ocean-blue" }
+    );
+    if (act.success && act.action) {
+      return {
+        reply: "Switching Fyza to the Ocean Blue theme.",
+        action: act.action,
+      };
+    }
+  }
+
+  if (lower.includes("violet") || lower.includes("purple")) {
+    const act = createValidatedAction(
+      "set_theme",
+      "Set Theme: Violet Intelligence",
+      "Switches visual identity to Violet Intelligence theme.",
+      "violet-intelligence",
+      { theme: "violet-intelligence" }
+    );
+    if (act.success && act.action) {
+      return {
+        reply: "Switching Fyza to the Violet Intelligence theme.",
+        action: act.action,
+      };
+    }
+  }
+
+  if (lower.includes("amber") || lower.includes("gold")) {
+    const act = createValidatedAction(
+      "set_theme",
+      "Set Theme: Amber Wealth",
+      "Switches visual identity to Amber Wealth theme.",
+      "amber-wealth",
+      { theme: "amber-wealth" }
+    );
+    if (act.success && act.action) {
+      return {
+        reply: "Switching Fyza to the Amber Wealth theme.",
+        action: act.action,
+      };
+    }
+  }
+
+  if (
+    lower.includes("light mode") ||
+    lower.includes("light theme") ||
+    lower.includes("clean light") ||
+    lower.includes("change to light") ||
+    lower.includes("switch to light")
+  ) {
+    const act = createValidatedAction(
+      "set_theme",
+      "Set Theme: Clean Light",
+      "Switches visual identity to Clean Light theme.",
+      "clean-light",
+      { theme: "clean-light" }
+    );
+    if (act.success && act.action) {
+      return {
+        reply: "Switching Fyza to the Clean Light theme.",
+        action: act.action,
+      };
+    }
+  }
+
+  // 14. External URL Navigation ("open a new tab and visit...", "visit https://...", "open website...")
+  const urlMatch = message.match(/(?:visit|open|go to|browse)\s+(?:a\s+new\s+tab\s+and\s+visit\s+|external\s+website\s+|website\s+|tab\s+|site\s+)?(https?:\/\/[^\s]+|[a-zA-Z0-9-]+\.[a-zA-Z]{2,}(?:\/[^\s]*)?)/i) ||
+    message.match(/(https?:\/\/[^\s]+)/i);
+
+  if (
+    (lower.includes("open a new tab") ||
+      lower.includes("visit") ||
+      lower.includes("external website") ||
+      lower.includes("chosen website") ||
+      urlMatch) &&
+    !lower.includes("open dashboard") &&
+    !lower.includes("open expenses") &&
+    !lower.includes("open budgets") &&
+    !lower.includes("open goals") &&
+    !lower.includes("open accounts") &&
+    !lower.includes("open analytics") &&
+    !lower.includes("open forecast") &&
+    !lower.includes("open subscriptions") &&
+    !lower.includes("open calendar") &&
+    !lower.includes("open reports") &&
+    !lower.includes("open settings")
+  ) {
+    const targetUrl = urlMatch ? urlMatch[1] : "https://github.com/anishg32/fine";
+    const act = createValidatedAction(
+      "open_authorized_external_url",
+      `Open External Website: ${targetUrl}`,
+      `Opens ${targetUrl} in a new tab via the authorized companion extension.`,
+      targetUrl
+    );
+    if (act.success && act.action) {
+      return {
+        reply: `I have prepared an action to open **${act.action.target}** in a new tab.\n\n🛡️ **Safety Check:** Because controlling browser tabs interacts with external websites outside of Fyza, this action requires your explicit authorization. Please review and click **Approve & Execute** below.`,
+        action: act.action,
+      };
+    } else if (act.error) {
+      return {
+        reply: `⚠️ Cannot open external site: ${act.error}`,
+        action: undefined,
+      };
+    }
+  }
+
+  // 15. Summarize / Read Current Page
+  if (
+    lower.includes("summarize this page") ||
+    lower.includes("summarize the page") ||
+    lower.includes("read this page") ||
+    lower.includes("analyze this page")
+  ) {
+    const act = createValidatedAction(
+      "summarize_authorized_page",
+      "Summarize Active Browser Page",
+      "Extracts visible text on the active browser tab via the companion extension and summarizes it safely.",
+      "active_tab"
+    );
+    if (act.success && act.action) {
+      return {
+        reply: "I have prepared a request to read and summarize the active tab. Per safety policy, page content is only inspected after your explicit authorization. Please approve the action below.",
+        action: act.action,
+      };
+    }
+  }
+
+  return null;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -134,6 +543,9 @@ export async function POST(req: NextRequest) {
 
     const periodLabel = context?.selectedPeriodLabel || "Current Month (October 2026)";
 
+    // Website Control Action Detector
+    const detectedAction = detectAgentActionFromQuery(trimmedMessage);
+
     // Build grounded deterministic financial summary from verified application data
     const summaryFacts = context
       ? `
@@ -190,6 +602,22 @@ Rules:
 4. State the time period covered by cited figures (${periodLabel}).
 5. Currency is Indian Rupee (₹).
 6. Do NOT give guaranteed investment predictions or professional legal/tax advice.
+7. If the user asks you to navigate to a page, open a feature, change the theme, or open an external website, fulfill their request conversationally and attach a valid action on its own line:
+ACTION: {"type": "navigate_to_page"|"open_expenses"|"open_budgets"|"open_savings_goals"|"set_theme"|"go_back"|"open_authorized_external_url"|"summarize_authorized_page", "target": "...", "title": "...", "description": "..."}
+
+Supported internal routes:
+- /app (Dashboard)
+- /app/transactions (Transactions / Expenses)
+- /app/budgets (Budgets)
+- /app/goals (Savings Goals)
+- /app/accounts (Accounts)
+- /app/analytics (Analytics)
+- /app/forecast (Cash Flow Forecast)
+- /app/subscriptions (Subscriptions)
+- /app/calendar (Calendar)
+- /app/reports (Reports)
+- /app/settings (Settings)
+Supported themes: emerald-midnight, ocean-blue, violet-intelligence, amber-wealth, clean-light
 
 VERIFIED USER FINANCIAL SNAPSHOT:
 ${summaryFacts}`;
@@ -223,14 +651,48 @@ ${summaryFacts}`;
 
         if (response.ok) {
           const data = await response.json();
-          const reply = data.choices?.[0]?.message?.content;
-          if (reply) {
-            return NextResponse.json({ reply, source: "live_ai" });
+          const rawReply = data.choices?.[0]?.message?.content;
+          if (rawReply) {
+            let finalReply = rawReply;
+            let action = detectedAction?.action;
+
+            const actionMatch = rawReply.match(/ACTION:\s*(\{.*\})/);
+            if (actionMatch) {
+              try {
+                const parsed = JSON.parse(actionMatch[1]);
+                const validated = createValidatedAction(
+                  parsed.type,
+                  parsed.title || "Agent Action",
+                  parsed.description || "",
+                  parsed.target,
+                  parsed.parameters
+                );
+                if (validated.success && validated.action) {
+                  action = validated.action;
+                }
+              } catch {}
+              finalReply = rawReply.replace(/ACTION:\s*(\{.*\})/, "").trim();
+            }
+
+            return NextResponse.json({
+              reply: finalReply,
+              action,
+              source: "live_ai",
+            });
           }
         }
       } catch {
         // Fall back gracefully to internal grounded financial intelligence engine
       }
+    }
+
+    // If an action was directly detected from user's intent, return it with clear reply
+    if (detectedAction) {
+      return NextResponse.json({
+        reply: detectedAction.reply,
+        action: detectedAction.action,
+        source: "deterministic_engine",
+      });
     }
 
     // Grounded Natural Language Financial Intelligence Engine
