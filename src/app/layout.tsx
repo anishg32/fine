@@ -40,7 +40,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${plusJakartaSans.variable} h-full`}>
-      <body className="min-h-full flex flex-col font-sans bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
+      <body suppressHydrationWarning className="min-h-full flex flex-col font-sans bg-background text-foreground selection:bg-primary selection:text-primary-foreground">
         <ThemeProvider
           attribute="data-theme"
           defaultTheme="emerald-midnight"
